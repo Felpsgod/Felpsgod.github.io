@@ -10,6 +10,48 @@
             padding: 0;
             box-sizing: border-box;
         }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 120px;
+        }
+
+        .header-logo {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .header img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        .header-text {
+            text-align: center;
+            flex: 1;
+            width: 100%;
+        }
+
+        .header-text h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .header-text p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,25 +63,6 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-        }
-
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            color: #7f8c8d;
-            font-size: 14px;
         }
 
         .nav-tabs {
@@ -74,6 +97,7 @@
 
         .nav-tab:hover:not(.active) {
             background: #20343D;
+            color:white;
         }
 
         .content-section {
@@ -130,7 +154,7 @@
         }
 
         .btn-primary {
-            background: #3498db;
+            background: #85BFCD;
             color: white;
         }
 
@@ -172,7 +196,7 @@
         .table th {
             background: #f8f9fa;
             font-weight: 600;
-            color: #2c3e50;
+            color: hsl(210, 29%, 24%);
         }
 
         .table tr:hover {
@@ -275,14 +299,37 @@
             .summary-grid {
                 grid-template-columns: 1fr;
             }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                margin-bottom: 15px;
+            }
+
+            .header-text {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>ECO - CENTRO DE INFUSÕES</h1>
-            <p>Sistema de Geração de Orçamentos Médicos</p>
+            <div class="header-logo">
+                <img src="https://imgur.com/kpCeqqJ.png" alt="ECO - Centro de Infusões">
+            </div>
+            <div class="header-text">
+                <h1>ECO - CENTRO DE INFUSÕES</h1>
+                <p>Sistema de Geração de Orçamentos Médicos</p>
+            </div>
         </div>
 
         <div class="nav-tabs">
@@ -292,6 +339,7 @@
             <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
         </div>
 
+        <!-- Resto do código permanece igual -->
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <h2>Dashboard</h2>
@@ -991,7 +1039,7 @@
                 const y = canvas.height - barHeight - 20;
                 
                 // Draw bar
-                ctx.fillStyle = '#3498db';
+                ctx.fillStyle = '#85BFCD';
                 ctx.fillRect(x + 10, y, barWidth - 20, barHeight);
                 
                 // Draw label
@@ -1067,15 +1115,5 @@
             }, 5000);
         }
     </script>
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
