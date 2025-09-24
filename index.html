@@ -339,7 +339,6 @@
             <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
         </div>
 
-        <!-- Resto do código permanece igual -->
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <h2>Dashboard</h2>
@@ -642,15 +641,15 @@
             `;
             
             Object.entries(procedures).forEach(([id, procedure]) => {
-                const total = procedure.material + procedure.custo_medicamento + procedure.custo_procedimento - procedure.desconto;
+                const total = procedure.custo_material + procedure.custo_medicamento + procedure.custo_procedimento - procedure.desconto;
                 html += `
                     <tr>
                         <td>${procedure.nome}</td>
-                        <td>R$ ${procedure.material}</td>
-                        <td>R$ ${procedure.custo_medicamento}</td>
-                        <td>R$ ${procedure.custo_procedimento}</td>
-                        <td>R$ ${procedure.desconto}</td>
-                        <td>R$ ${total}</td>
+                        <td>R$ ${procedure.custo_material.toFixed(2)}</td>
+                        <td>R$ ${procedure.custo_medicamento.toFixed(2)}</td>
+                        <td>R$ ${procedure.custo_procedimento.toFixed(2)}</td>
+                        <td>R$ ${procedure.desconto.toFixed(2)}</td>
+                        <td>R$ ${total.toFixed(2)}</td>
                         <td>
                             <button class="btn btn-danger" onclick="deleteProcedure('${id}')">Excluir</button>
                         </td>
@@ -831,26 +830,52 @@
                     <style>
                         body {
                             font-family: Arial, sans-serif;
-                            margin: 20px;
-                            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                            margin: 0;
+                            padding: 0;
+                            background: white;
                         }
                         .header {
                             text-align: center;
-                            margin-bottom: 30px;
-                            background: white;
                             padding: 20px;
-                            border-radius: 10px;
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                            background: white;
+                            border-bottom: 2px solid #ddd;
                         }
                         .header h1 {
                             color: #2c3e50;
                             margin-bottom: 10px;
+                            font-size: 24px;
+                        }
+                        .header p {
+                            color: #7f8c8d;
+                            font-size: 14px;
+                        }
+                        .images-container {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 20px;
+                            background: #f8f9fa;
+                            border-bottom: 2px solid #ddd;
+                        }
+                        .image-item {
+                            text-align: center;
+                            flex: 1;
+                            margin: 0 10px;
+                        }
+                        .image-item img {
+                            max-width: 100%;
+                            height: 120px;
+                            object-fit: cover;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        .image-item p {
+                            margin-top: 8px;
+                            font-size: 12px;
+                            color: #555;
+                            font-weight: bold;
                         }
                         .content {
-                            background: white;
                             padding: 30px;
-                            border-radius: 10px;
-                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                         }
                         .info-grid {
                             display: grid;
@@ -901,10 +926,21 @@
                             margin-top: 30px;
                             color: #7f8c8d;
                             font-size: 12px;
+                            padding: 20px;
+                            border-top: 1px solid #ddd;
                         }
                         @media print {
-                            body { background: white; }
-                            .content { box-shadow: none; }
+                            body { 
+                                background: white; 
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .images-container {
+                                page-break-after: avoid;
+                            }
+                            .content {
+                                page-break-before: avoid;
+                            }
                         }
                     </style>
                 </head>
@@ -912,6 +948,36 @@
                     <div class="header">
                         <h1>ECO - CENTRO DE INFUSÕES</h1>
                         <p>Nosso Centro de Infusão conta com um ambiente humanizado e seguro</p>
+                    </div>
+                    
+                    <div class="images-container">
+                        <div class="image-item">
+                            <img src="https://imgur.com/EvhLPM4.png" alt="Recepção Interna">
+                            <p>RECEPÇÃO INTERNA</p>
+                        </div>
+                        <div class="image-item">
+                            <img src="https://via.placeholder.com/200x120/20343D/FFFFFF?text=SALA+DE+INFUSÃO" alt="Sala de Infusão - Poltrona">
+                            <p>SALA DE INFUSÃO - POLTRONA</p>
+                        </div>
+                        <div class="image-item">
+                            <img src="https://via.placeholder.com/200x120/85BFCD/FFFFFF?text=POSTO+ENFERMAGEM" alt="Posto de Enfermagem">
+                            <p>POSTO DE ENFERMAGEM</p>
+                        </div>
+                    </div>
+                    
+                    <div class="images-container">
+                        <div class="image-item">
+                            <img src="https://via.placeholder.com/200x120/27ae60/FFFFFF?text=SALA+INFUSÃO+CAMA" alt="Sala de Infusão - Cama">
+                            <p>SALA DE INFUSÃO - CAMA</p>
+                        </div>
+                        <div class="image-item">
+                            <img src="https://via.placeholder.com/200x120/e74c3c/FFFFFF?text=HALL+ENTRADA" alt="Hall de Entrada">
+                            <p>HALL DE ENTRADA</p>
+                        </div>
+                        <div class="image-item">
+                            <img src="https://via.placeholder.com/200x120/f39c12/FFFFFF?text=RECEPÇÃO" alt="Recepção - Consultórios">
+                            <p>RECEPÇÃO - CONSULTÓRIOS</p>
+                        </div>
                     </div>
                     
                     <div class="content">
@@ -933,7 +999,6 @@
                                 ${new Date(budget.data).toLocaleDateString('pt-BR')}
                             </div>
                         </div>
-                        
                         
                         <table class="values-table">
                             <tr>
@@ -979,15 +1044,11 @@
                         <p>Curitiba, ${new Date().toLocaleDateString('pt-BR')}</p>
                     </div>
 
-                    
-                    
                     <script>
                         window.onload = function() {
                             window.print();
                         }
-<\/script>
-
-                    
+                    <\/script>
                 </body>
                 </html>
             `;
