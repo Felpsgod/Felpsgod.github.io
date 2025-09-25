@@ -841,21 +841,41 @@
                             flex-direction: column;
                         }
                         .header {
-                            text-align: center;
+                            text-align: left;
                             padding: 40px 20px 20px 20px;
                             background: white;
+                            display: flex;
+
+
                         }
+                            .itensreader{
+                                width: 20%
+                                margin-top: 10px;
+                                margin-left: 30px;
+                            }
+                            .itensreader2{
+                            border-left: 2px solid #004d43;
+
+                            margin-left: 20px;
+                                width: 70%
+                            }
+
+
                         .header h1 {
+                            margin-left: 20px;
+
                             color: #2c3e50;
                             margin-bottom: 15px;
-                            font-size: 28px;
+                            font-size: 19px;
                         }
                         .header p {
+                        margin-left: 20px;
+
                             color: #7f8c8d;
-                            font-size: 16px;
+                            font-size: 11px;
                             line-height: 1.6;
                             max-width: 800px;
-                            margin: 0 auto;
+                        
                         }
                         .divider {
                             height: 3px;
@@ -930,24 +950,25 @@
                         }
                         .payment-info {
                             background: #f0f8ff;
-                            padding: 10px;
+                            padding: 0px;
                             border-radius: 10px;
-                            margin: 30px 0;
-                            font-size: 12px;
+                            margin: 5px 0;
+                            font-size: 10px;
                         }
                         .bank-info {
                             background: #fff5f5;
-                            padding: 10px;
+                            padding: 0px;
+                            padding: 5px;
                             border-radius: 10px;
-                            margin: 10px 0;
-                            font-size: 12px;
+                            margin: 5px 0;
+                            font-size: 10px;
                         }
                         .footer {
                             text-align: center;
-                            margin-top: 40px;
+                            margin-top: 10px;
                             color: #7f8c8d;
                             font-size: 14px;
-                            padding: 25px;
+                            padding: 15px;
                             border-top: 2px solid #ddd;
                         }
                         .print-btn {
@@ -992,9 +1013,18 @@
                     <!-- PRIMEIRA PÁGINA -->
                     <div class="first-page">
                         <div class="header">
+
+                            <div class="itensreader">
+                            <img src="vert.png" alt="Recepção Interna" loading="lazy" style="width: 80px; height: 80px">
+                            </div>
+
+                            <div class="itensreader2">
                             <h1>ECO - CENTRO DE INFUSÕES</h1>
                             <p>Nosso Centro de Infusão conta com um ambiente humanizado e seguro, nossa estrutura conta com salas climatizadas, com televisão e acesso a internet, kit lanche e uma linda vista para a Serra do Mar, para tornar sua aplicação mais agradável possível.</p>
-                        </div>
+                            </div>
+
+
+                            </div>
                         
                         <div class="divider"></div>
                         
@@ -1029,76 +1059,79 @@
                         </div>
                     </div>
                     
-                    <!-- SEGUNDA PÁGINA -->
-                    <div class="page-break"></div>
-                    <div class="second-page">
-                        <div class="header">
-                            <h1>ORÇAMENTO MÉDICO</h1>
-                            <p>Detalhes do procedimento e informações para pagamento</p>
-                        </div>
-                        
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>Paciente:</strong><br>
-                                ${budget.paciente}
-                            </div>
-                            <div class="info-item">
-                                <strong>Médico:</strong><br>
-                                ${budget.medico}
-                            </div>
-                            <div class="info-item">
-                                <strong>Procedimento:</strong><br>
-                                ${budget.procedimento}
-                            </div>
-                            <div class="info-item">
-                                <strong>Data:</strong><br>
-                                ${new Date(budget.data).toLocaleDateString('pt-BR')}
-                            </div>
-                        </div>
-                        
-                        <table class="values-table">
-                            <tr>
-                                <th>TOTAL MATERIAL</th>
-                                <td>R$ ${budget.total_material.toFixed(2)}</td>
-                            </tr>
-                            <tr>
-                                <th>TOTAL MEDICAMENTO</th>
-                                <td>R$ ${budget.total_medicamento.toFixed(2)}</td>
-                            </tr>
-                            <tr>
-                                <th>TOTAL PROCEDIMENTO</th>
-                                <td>R$ ${budget.total_procedimento.toFixed(2)}</td>
-                            </tr>
-                            <tr>
-                                <th>DESCONTO</th>
-                                <td>-R$ ${budget.desconto.toFixed(2)}</td>
-                            </tr>
-                            <tr class="total-row">
-                                <th>VALOR FINAL</th>
-                                <td>R$ ${budget.valor_final.toFixed(2)}</td>
-                            </tr>
-                        </table>
-                        
-                        <div class="payment-info">
-                            <h3>FORMAS DE PAGAMENTO</h3>
-                            <p><strong>Dinheiro, TED ou PIX:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-                            <p><strong>Débito:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-                            <p><strong>Crédito (à vista):</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-                            <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
-                        </div>
-                        
-                        <div class="bank-info">
-                            <h3>DADOS BANCÁRIOS</h3>
-                            <p><strong>PIX:</strong> 54.385.647/0001-08</p>
-                            <p><strong>BANCO:</strong> Bradesco</p>
-                            <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
-                        </div>
-                        
-                        <div class="footer">
-                            <p>SEJA BEM VINDO AO ECO - CENTRO DE INFUSÕES</p>
-                            <p>Curitiba, ${new Date().toLocaleDateString('pt-BR')}</p>
-                        </div>
-                    </div>
+                 <!-- SEGUNDA PÁGINA -->
+<div class="page-break"></div>
+<div class="second-page">
+    <div class="header">
+        <h1>ORÇAMENTO MÉDICO</h1>
+        <p>Detalhes do procedimento e informações para pagamento</p>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-item">
+            <strong>Paciente:</strong><br>
+            ${budget.paciente}
+        </div>
+        <div class="info-item">
+            <strong>Médico:</strong><br>
+            ${budget.medico}
+        </div>
+        <div class="info-item">
+            <strong>Procedimento:</strong><br>
+            ${budget.procedimento}
+        </div>
+        <div class="info-item">
+            <strong>Data:</strong><br>
+            ${new Date(budget.data).toLocaleDateString('pt-BR')}
+        </div>
+    </div>
+    
+    <table class="values-table">
+        <tr>
+            <th>TOTAL MATERIAL</th>
+            <td>R$ ${budget.total_material.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <th>TOTAL MEDICAMENTO</th>
+            <td>R$ ${budget.total_medicamento.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <th>TOTAL PROCEDIMENTO</th>
+            <td>R$ ${budget.total_procedimento.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <th>DESCONTO</th>
+            <td>-R$ ${budget.desconto.toFixed(2)}</td>
+        </tr>
+        <tr class="total-row">
+            <th>VALOR FINAL</th>
+            <td>R$ ${budget.valor_final.toFixed(2)}</td>
+        </tr>
+    </table>
+    
+    <div class="payment-info">
+        <h3>FORMAS DE PAGAMENTO</h3>
+        <p><strong>Dinheiro, TED ou PIX:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+        <p><strong>Débito:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+        <p><strong>Crédito (à vista):</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+        <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
+    </div>
+    
+    <!-- MOVENDO AS INFORMAÇÕES BANCÁRIAS E RODAPÉ PARA CIMA -->
+    <div class="bank-info">
+        <h3>DADOS BANCÁRIOS</h3>
+        <p><strong>PIX:</strong> 54.385.647/0001-08</p>
+        <p><strong>BANCO:</strong> Bradesco</p>
+        <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
+    </div>
+    
+    <div class="footer">
+        <p>SEJA BEM VINDO AO ECO - CENTRO DE INFUSÕES</p>
+        <p>Curitiba, ${new Date().toLocaleDateString('pt-BR')}</p>
+    </div>
+</div>
+
+                     
 
                     <script>
                         console.log('PDF carregado com sucesso!');
