@@ -778,7 +778,7 @@
             Object.entries(budgets).forEach(([id, budget]) => {
                 html += `
                     <tr>
-                        <td>${new Date(budget.data).toLocaleDateString('pt-BR')}</td>
+                        <td>${new Date().toLocaleDateString('pt-BR')}</td>
                         <td>${budget.paciente}</td>
                         <td>${budget.medico}</td>
                         <td>${budget.procedimento}</td>
@@ -1081,7 +1081,7 @@
         </div>
         <div class="info-item">
             <strong>Data:</strong><br>
-            ${new Date(budget.data).toLocaleDateString('pt-BR')}
+            ${new Date().toLocaleDateString('pt-BR')}
         </div>
     </div>
     
@@ -1257,6 +1257,7 @@
     </script>
 </body>
 </html>
+
 
 
 
