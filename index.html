@@ -53,6 +53,40 @@
             font-size: 14px;
         }
 
+        .user-info {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .user-info span {
+            font-weight: 600;
+            color: #2c3e50;
+            display: block;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #00855B 0%, #20343D 100%);
@@ -287,6 +321,13 @@
             color: #7f8c8d;
         }
 
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -317,198 +358,263 @@
             .header-text {
                 width: 100%;
             }
+
+            .user-info {
+                position: relative;
+                transform: none;
+                margin-top: 15px;
+                right: auto;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="header-logo">
-                <img src="https://imgur.com/kpCeqqJ.png" alt="ECO - Centro de Infusões">
-            </div>
-            <div class="header-text">
-                <h1>ECO - CENTRO DE INFUSÕES</h1>
-                <p>Sistema de Geração de Orçamentos Médicos</p>
-            </div>
-        </div>
-
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
-            <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
-            <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
-            <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
-        </div>
-
-        <!-- Dashboard Section -->
-        <div id="dashboard" class="content-section active">
-            <h2>Dashboard</h2>
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <h4>Total de Orçamentos</h4>
-                    <div class="value" id="totalBudgets">0</div>
-                </div>
-                <div class="summary-item">
-                    <h4>Valor Total</h4>
-                    <div class="value" id="totalValue">R$ 0,00</div>
-                </div>
-                <div class="summary-item">
-                    <h4>Procedimentos Cadastrados</h4>
-                    <div class="value" id="totalProcedures">0</div>
-                </div>
-                <div class="summary-item">
-                    <h4>Orçamentos Este Mês</h4>
-                    <div class="value" id="monthlyBudgets">0</div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col">
-                    <div class="chart-container">
-                        <h3>Orçamentos por Mês</h3>
-                        <canvas id="monthlyChart" width="400" height="200"></canvas>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="chart-container">
-                        <h3>Procedimentos Mais Orçados</h3>
-                        <div id="procedureRanking"></div>
+        <!-- Seção de Login -->
+        <div id="loginSection" class="content-section active">
+            <div class="login-container">
+                <div class="card" style="max-width: 400px; width: 100%;">
+                    <h3 style="text-align: center; margin-bottom: 20px;">Login do Sistema</h3>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="username">Usuário SharePoint</label>
+                            <input type="text" id="username" required placeholder="seu.usuario@dominio.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Senha</label>
+                            <input type="password" id="password" required placeholder="Sua senha">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar no Sistema</button>
+                    </form>
+                    <div id="loginError" class="alert alert-error hidden" style="margin-top: 15px;"></div>
+                    
+                    <!-- Modo de desenvolvimento -->
+                    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
+                        <h4 style="color: #856404; margin-bottom: 10px;">Modo Desenvolvimento</h4>
+                        <p style="color: #856404; font-size: 12px; margin-bottom: 10px;">
+                            Para teste, use qualquer usuário e senha. Em produção, será integrado com SharePoint.
+                        </p>
+                        <button type="button" class="btn" style="background: #ffc107; color: #856404; width: 100%; font-size: 12px;" onclick="demoLogin()">
+                            Login Demo
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Procedures Section -->
-        <div id="procedures" class="content-section">
-            <h2>Cadastro de Procedimentos</h2>
-            
-            <div class="card">
-                <h3>Novo Procedimento</h3>
-                <form id="procedureForm">
+        <!-- Interface Principal (após login) -->
+        <div id="mainInterface" class="hidden">
+            <div class="header">
+                <div class="header-logo">
+                    <img src="https://imgur.com/kpCeqqJ.png" alt="ECO - Centro de Infusões">
+                </div>
+                <div class="header-text">
+                    <h1>ECO - CENTRO DE INFUSÕES</h1>
+                    <p>Sistema de Geração de Orçamentos Médicos</p>
+                </div>
+                <div class="user-info">
+                    <span id="userDisplayName">Usuário</span>
+                    <button class="logout-btn" onclick="logout()">Sair</button>
+                </div>
+            </div>
+
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+                <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
+                <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
+                <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
+                <button class="nav-tab" onclick="showSection('audit')">Auditoria</button>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="content-section active">
+                <h2>Dashboard</h2>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h4>Total de Orçamentos</h4>
+                        <div class="value" id="totalBudgets">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Valor Total</h4>
+                        <div class="value" id="totalValue">R$ 0,00</div>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Procedimentos Cadastrados</h4>
+                        <div class="value" id="totalProcedures">0</div>
+                    </div>
+                    <div class="summary-item">
+                        <h4>Orçamentos Este Mês</h4>
+                        <div class="value" id="monthlyBudgets">0</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="chart-container">
+                            <h3>Orçamentos por Mês</h3>
+                            <canvas id="monthlyChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="chart-container">
+                            <h3>Procedimentos Mais Orçados</h3>
+                            <div id="procedureRanking"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="chart-container">
+                            <h3>Atividade por Usuário</h3>
+                            <div id="userActivity"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Procedures Section -->
+            <div id="procedures" class="content-section">
+                <h2>Cadastro de Procedimentos</h2>
+                
+                <div class="card">
+                    <h3>Novo Procedimento</h3>
+                    <form id="procedureForm">
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="procedureName">Nome do Procedimento</label>
+                                    <input type="text" id="procedureName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="materialCost">Custo Material (R$)</label>
+                                    <input type="number" id="materialCost" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="medicationCost">Custo Medicamento (R$)</label>
+                                    <input type="number" id="medicationCost" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="procedureCost">Custo Procedimento (R$)</label>
+                                    <input type="number" id="procedureCost" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="discount">Desconto (R$)</label>
+                                    <input type="number" id="discount" step="0.01" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>Procedimentos Cadastrados</h3>
+                    <div id="proceduresTable"></div>
+                </div>
+            </div>
+
+            <!-- Budget Section -->
+            <div id="budget" class="content-section">
+                <h2>Novo Orçamento</h2>
+                
+                <form id="budgetForm">
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
-                                <label for="procedureName">Nome do Procedimento</label>
-                                <input type="text" id="procedureName" required>
+                                <label for="patientName">Nome do Paciente</label>
+                                <input type="text" id="patientName" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="doctorName">Médico Responsável</label>
+                                <input type="text" id="doctorName" required>
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="materialCost">Custo Material (R$)</label>
-                                <input type="number" id="materialCost" step="0.01" required>
+                    
+                    <div class="form-group">
+                        <label for="selectedProcedure">Procedimento</label>
+                        <select id="selectedProcedure" required>
+                            <option value="">Selecione um procedimento</option>
+                        </select>
+                    </div>
+
+                    <div id="budgetSummary" class="card hidden">
+                        <h3>Resumo do Orçamento</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <h4>Total Material</h4>
+                                <div class="value" id="summaryMaterial">R$ 0,00</div>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Total Medicamento</h4>
+                                <div class="value" id="summaryMedication">R$ 0,00</div>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Total Procedimento</h4>
+                                <div class="value" id="summaryProcedure">R$ 0,00</div>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Desconto</h4>
+                                <div class="value" id="summaryDiscount">R$ 0,00</div>
+                            </div>
+                            <div class="summary-item">
+                                <h4>Valor Final</h4>
+                                <div class="value" id="summaryTotal">R$ 0,00</div>
                             </div>
                         </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="medicationCost">Custo Medicamento (R$)</label>
-                                <input type="number" id="medicationCost" step="0.01" required>
-                            </div>
+
+                        <div style="margin-top: 20px;">
+                            <h4>Formas de Pagamento:</h4>
+                            <p><strong>Dinheiro, TED ou PIX:</strong> <span id="paymentCash">R$ 0,00</span></p>
+                            <p><strong>Débito:</strong> <span id="paymentDebit">R$ 0,00</span></p>
+                            <p><strong>Crédito (à vista):</strong> <span id="paymentCredit">R$ 0,00</span></p>
+                            <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <h4>Dados Bancários:</h4>
+                            <p><strong>PIX:</strong> 54.385.647/0001-08</p>
+                            <p><strong>BANCO:</strong> Bradesco</p>
+                            <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="procedureCost">Custo Procedimento (R$)</label>
-                                <input type="number" id="procedureCost" step="0.01" required>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="discount">Desconto (R$)</label>
-                                <input type="number" id="discount" step="0.01" value="0">
-                            </div>
-                        </div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-success">Gerar Orçamento</button>
+                        <button type="button" class="btn btn-primary" onclick="generatePDF()" id="pdfBtn" disabled>Gerar PDF</button>
                     </div>
-                    <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
                 </form>
             </div>
 
-            <div class="card">
-                <h3>Procedimentos Cadastrados</h3>
-                <div id="proceduresTable"></div>
+            <!-- Budgets List Section -->
+            <div id="budgets" class="content-section">
+                <h2>Orçamentos Gerados</h2>
+                <div id="budgetsTable"></div>
             </div>
-        </div>
 
-        <!-- Budget Section -->
-        <div id="budget" class="content-section">
-            <h2>Novo Orçamento</h2>
-            
-            <form id="budgetForm">
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label for="patientName">Nome do Paciente</label>
-                            <input type="text" id="patientName" required>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="form-group">
-                            <label for="doctorName">Médico Responsável</label>
-                            <input type="text" id="doctorName" required>
-                        </div>
-                    </div>
+            <!-- Auditoria Section -->
+            <div id="audit" class="content-section">
+                <h2>Auditoria do Sistema</h2>
+                <div class="card">
+                    <h3>Log de Atividades</h3>
+                    <div id="auditLog"></div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="selectedProcedure">Procedimento</label>
-                    <select id="selectedProcedure" required>
-                        <option value="">Selecione um procedimento</option>
-                    </select>
-                </div>
-
-                <div id="budgetSummary" class="card hidden">
-                    <h3>Resumo do Orçamento</h3>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <h4>Total Material</h4>
-                            <div class="value" id="summaryMaterial">R$ 0,00</div>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Total Medicamento</h4>
-                            <div class="value" id="summaryMedication">R$ 0,00</div>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Total Procedimento</h4>
-                            <div class="value" id="summaryProcedure">R$ 0,00</div>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Desconto</h4>
-                            <div class="value" id="summaryDiscount">R$ 0,00</div>
-                        </div>
-                        <div class="summary-item">
-                            <h4>Valor Final</h4>
-                            <div class="value" id="summaryTotal">R$ 0,00</div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 20px;">
-                        <h4>Formas de Pagamento:</h4>
-                        <p><strong>Dinheiro, TED ou PIX:</strong> <span id="paymentCash">R$ 0,00</span></p>
-                        <p><strong>Débito:</strong> <span id="paymentDebit">R$ 0,00</span></p>
-                        <p><strong>Crédito (à vista):</strong> <span id="paymentCredit">R$ 0,00</span></p>
-                        <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
-                    </div>
-
-                    <div style="margin-top: 20px;">
-                        <h4>Dados Bancários:</h4>
-                        <p><strong>PIX:</strong> 54.385.647/0001-08</p>
-                        <p><strong>BANCO:</strong> Bradesco</p>
-                        <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <button type="submit" class="btn btn-success">Gerar Orçamento</button>
-                    <button type="button" class="btn btn-primary" onclick="generatePDF()" id="pdfBtn" disabled>Gerar PDF</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Budgets List Section -->
-        <div id="budgets" class="content-section">
-            <h2>Orçamentos Gerados</h2>
-            <div id="budgetsTable"></div>
+            </div>
         </div>
     </div>
 
@@ -516,24 +622,253 @@
         // Firebase configuration
         const FIREBASE_URL = 'https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com';
         
+        // Configuração SharePoint (altere para sua URL)
+        const SHAREPOINT_SITE = 'https://seusite.sharepoint.com/sites/eco';
+        
         let procedures = {};
         let budgets = {};
         let currentBudget = null;
+        let currentUser = null;
+        let users = {};
+        let auditLog = {};
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            loadUsers();
             loadProcedures();
             loadBudgets();
-            updateDashboard();
+            loadAuditLog();
             
             // Set up form event listeners
             document.getElementById('procedureForm').addEventListener('submit', saveProcedure);
             document.getElementById('budgetForm').addEventListener('submit', generateBudget);
             document.getElementById('selectedProcedure').addEventListener('change', updateBudgetSummary);
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
         });
+
+        // Sistema de Autenticação
+        async function loadUsers() {
+            users = await loadFromFirebase('usuarios') || {};
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showAlert('Autenticando...', 'success');
+            
+            // Tenta autenticar com SharePoint primeiro
+            const sharepointAuth = await authenticateWithSharePoint(username, password);
+            
+            if (sharepointAuth.success) {
+                await handleSuccessfulLogin(username, sharepointAuth.user);
+            } else {
+                // Fallback para autenticação local (apenas desenvolvimento)
+                if (await authenticateLocalUser(username, password)) {
+                    await handleSuccessfulLogin(username, { DisplayName: username });
+                } else {
+                    document.getElementById('loginError').textContent = 'Usuário ou senha inválidos';
+                    document.getElementById('loginError').classList.remove('hidden');
+                    showAlert('Falha na autenticação', 'error');
+                }
+            }
+        }
+
+        // Autenticação com SharePoint
+        async function authenticateWithSharePoint(username, password) {
+            try {
+                // Método 1: Usando SharePoint REST API (requer CORS configurado)
+                const endpoint = `${SHAREPOINT_SITE}/_api/web/currentuser`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json;odata=verbose',
+                        'Content-Type': 'application/json;odata=verbose'
+                    },
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        success: true,
+                        user: data.d
+                    };
+                }
+                
+                // Se a autenticação direta falhar, retorna falso
+                return { success: false };
+            } catch (error) {
+                console.warn('Autenticação SharePoint falhou, usando modo local:', error);
+                return { success: false };
+            }
+        }
+
+        // Autenticação local (para desenvolvimento)
+        async function authenticateLocalUser(username, password) {
+            // Em produção, remova esta função e use apenas SharePoint
+            if (users[username]) {
+                return users[username].password === password;
+            } else {
+                // Cria usuário demo
+                users[username] = {
+                    nome: username.split('@')[0],
+                    password: password,
+                    email: username,
+                    criadoEm: new Date().toISOString(),
+                    isLocal: true
+                };
+                await saveToFirebase('usuarios', users);
+                return true;
+            }
+        }
+
+        async function handleSuccessfulLogin(username, userData) {
+            currentUser = {
+                username: username,
+                nome: userData.DisplayName || username.split('@')[0],
+                email: username,
+                loginTime: new Date().toISOString(),
+                isSharePoint: !userData.isLocal
+            };
+            
+            // Salvar sessão
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Registrar login no audit log
+            await logAudit('LOGIN', `Usuário ${currentUser.nome} fez login no sistema`);
+            
+            showAlert(`Bem-vindo, ${currentUser.nome}!`, 'success');
+            showMainInterface();
+        }
+
+        function demoLogin() {
+            // Login rápido para desenvolvimento
+            document.getElementById('username').value = 'usuario.demo@eco.com';
+            document.getElementById('password').value = 'demo123';
+            handleLogin(new Event('submit'));
+        }
+
+        function checkAuthentication() {
+            const savedUser = sessionStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showMainInterface();
+            }
+        }
+
+        function showMainInterface() {
+            document.getElementById('loginSection').classList.remove('active');
+            document.getElementById('mainInterface').classList.remove('hidden');
+            document.getElementById('userDisplayName').textContent = currentUser.nome;
+            
+            updateDashboard();
+        }
+
+        async function logout() {
+            await logAudit('LOGOUT', `Usuário ${currentUser.nome} fez logout`);
+            
+            currentUser = null;
+            sessionStorage.removeItem('currentUser');
+            
+            document.getElementById('mainInterface').classList.add('hidden');
+            document.getElementById('loginSection').classList.add('active');
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').classList.add('hidden');
+            
+            showAlert('Logout realizado com sucesso!', 'success');
+        }
+
+        // Sistema de Auditoria
+        async function loadAuditLog() {
+            auditLog = await loadFromFirebase('audit') || {};
+        }
+
+        async function logAudit(action, details) {
+            if (!currentUser) return;
+            
+            const logId = 'log_' + Date.now();
+            const logEntry = {
+                action: action,
+                details: details,
+                user: currentUser.username,
+                userName: currentUser.nome,
+                timestamp: new Date().toISOString(),
+                ip: await getClientIP()
+            };
+            
+            auditLog[logId] = logEntry;
+            await saveToFirebase('audit', auditLog);
+            
+            // Atualiza a exibição se estiver na aba de auditoria
+            if (document.getElementById('audit').classList.contains('active')) {
+                displayAuditLog();
+            }
+        }
+
+        async function getClientIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                return 'Não disponível';
+            }
+        }
+
+        function displayAuditLog() {
+            const container = document.getElementById('auditLog');
+            
+            if (Object.keys(auditLog).length === 0) {
+                container.innerHTML = '<p>Nenhum registro de auditoria encontrado.</p>';
+                return;
+            }
+            
+            const sortedLogs = Object.entries(auditLog)
+                .sort(([,a], [,b]) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 100); // Mostra apenas os 100 mais recentes
+            
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>Detalhes</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sortedLogs.forEach(([id, log]) => {
+                html += `
+                    <tr>
+                        <td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td>
+                        <td>${log.userName}</td>
+                        <td><span style="padding: 2px 8px; background: #e3f2fd; border-radius: 3px; font-size: 12px;">${log.action}</span></td>
+                        <td>${log.details}</td>
+                        <td style="font-size: 12px; color: #666;">${log.ip}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
 
         // Navigation functions
         function showSection(sectionId) {
+            if (!currentUser) {
+                showLoginInterface();
+                return;
+            }
+            
             // Hide all sections
             const sections = document.querySelectorAll('.content-section');
             sections.forEach(section => section.classList.remove('active'));
@@ -557,6 +892,8 @@
                 displayBudgets();
             } else if (sectionId === 'budget') {
                 loadProcedureOptions();
+            } else if (sectionId === 'audit') {
+                displayAuditLog();
             }
         }
 
@@ -592,18 +929,27 @@
         async function saveProcedure(event) {
             event.preventDefault();
             
+            if (!currentUser) {
+                showAlert('Faça login para cadastrar procedimentos', 'error');
+                return;
+            }
+            
             const procedureData = {
                 nome: document.getElementById('procedureName').value,
                 custo_material: parseFloat(document.getElementById('materialCost').value),
                 custo_medicamento: parseFloat(document.getElementById('medicationCost').value),
                 custo_procedimento: parseFloat(document.getElementById('procedureCost').value),
-                desconto: parseFloat(document.getElementById('discount').value) || 0
+                desconto: parseFloat(document.getElementById('discount').value) || 0,
+                criadoPor: currentUser.username,
+                criadorNome: currentUser.nome,
+                dataCriacao: new Date().toISOString()
             };
             
             const procedureId = 'procedimento_' + Date.now();
             procedures[procedureId] = procedureData;
             
             await saveToFirebase('procedimentos', procedures);
+            await logAudit('CREATE_PROCEDURE', `Criou procedimento: ${procedureData.nome}`);
             
             showAlert('Procedimento salvo com sucesso!', 'success');
             document.getElementById('procedureForm').reset();
@@ -634,6 +980,7 @@
                             <th>Procedimento</th>
                             <th>Desconto</th>
                             <th>Total</th>
+                            <th>Criado por</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -650,6 +997,7 @@
                         <td>R$ ${procedure.custo_procedimento.toFixed(2)}</td>
                         <td>R$ ${procedure.desconto.toFixed(2)}</td>
                         <td>R$ ${total.toFixed(2)}</td>
+                        <td>${procedure.criadorNome}</td>
                         <td>
                             <button class="btn btn-danger" onclick="deleteProcedure('${id}')">Excluir</button>
                         </td>
@@ -662,9 +1010,17 @@
         }
 
         async function deleteProcedure(procedureId) {
+            if (!currentUser) {
+                showAlert('Faça login para executar esta ação', 'error');
+                return;
+            }
+            
             if (confirm('Tem certeza que deseja excluir este procedimento?')) {
+                const procedureName = procedures[procedureId].nome;
                 delete procedures[procedureId];
                 await saveToFirebase('procedimentos', procedures);
+                await logAudit('DELETE_PROCEDURE', `Excluiu procedimento: ${procedureName}`);
+                
                 displayProcedures();
                 loadProcedureOptions();
                 showAlert('Procedimento excluído com sucesso!', 'success');
@@ -712,6 +1068,12 @@
         async function generateBudget(event) {
             event.preventDefault();
             
+            if (!currentUser) {
+                showAlert('Faça login para gerar orçamentos', 'error');
+                showLoginInterface();
+                return;
+            }
+            
             const patientName = document.getElementById('patientName').value;
             const doctorName = document.getElementById('doctorName').value;
             const selectedProcedureId = document.getElementById('selectedProcedure').value;
@@ -733,13 +1095,20 @@
                 total_procedimento: procedure.custo_procedimento,
                 desconto: procedure.desconto,
                 valor_final: total,
-                data: new Date().toISOString().split('T')[0]
+                data: new Date().toISOString().split('T')[0],
+                // Novos campos de logging
+                criadoPor: currentUser.username,
+                criadorNome: currentUser.nome,
+                dataCriacao: new Date().toISOString(),
+                ultimaModificacao: new Date().toISOString(),
+                modificadoPor: currentUser.username
             };
             
             const budgetId = 'orcamento_' + Date.now();
             budgets[budgetId] = currentBudget;
             
             await saveToFirebase('orcamentos', budgets);
+            await logAudit('CREATE_BUDGET', `Criou orçamento para: ${patientName} - ${procedure.nome} - R$ ${total.toFixed(2)}`);
             
             showAlert('Orçamento gerado com sucesso!', 'success');
             document.getElementById('pdfBtn').disabled = false;
@@ -769,6 +1138,7 @@
                             <th>Médico</th>
                             <th>Procedimento</th>
                             <th>Valor Final</th>
+                            <th>Criado por</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -778,11 +1148,12 @@
             Object.entries(budgets).forEach(([id, budget]) => {
                 html += `
                     <tr>
-                        <td>${new Date().toLocaleDateString('pt-BR')}</td>
+                        <td>${new Date(budget.dataCriacao).toLocaleDateString('pt-BR')}</td>
                         <td>${budget.paciente}</td>
                         <td>${budget.medico}</td>
                         <td>${budget.procedimento}</td>
                         <td>R$ ${budget.valor_final.toFixed(2)}</td>
+                        <td>${budget.criadorNome || budget.criadoPor}</td>
                         <td>
                             <button class="btn btn-primary" onclick="generateBudgetPDF('${id}')">PDF</button>
                             <button class="btn btn-danger" onclick="deleteBudget('${id}')">Excluir</button>
@@ -796,16 +1167,24 @@
         }
 
         async function deleteBudget(budgetId) {
+            if (!currentUser) {
+                showAlert('Faça login para executar esta ação', 'error');
+                return;
+            }
+            
             if (confirm('Tem certeza que deseja excluir este orçamento?')) {
+                const budget = budgets[budgetId];
                 delete budgets[budgetId];
                 await saveToFirebase('orcamentos', budgets);
+                await logAudit('DELETE_BUDGET', `Excluiu orçamento: ${budget.paciente} - ${budget.procedimento} - R$ ${budget.valor_final.toFixed(2)}`);
+                
                 displayBudgets();
                 updateDashboard();
                 showAlert('Orçamento excluído com sucesso!', 'success');
             }
         }
 
-        // PDF Generation - VERSÃO COM IMAGENS ORIGINAIS
+        // PDF Generation
         function generatePDF() {
             if (!currentBudget) {
                 showAlert('Nenhum orçamento para gerar PDF', 'error');
@@ -845,37 +1224,29 @@
                             padding: 40px 20px 20px 20px;
                             background: white;
                             display: flex;
-
-
                         }
-                            .itensreader{
-                                width: 20%
-                                margin-top: 10px;
-                                margin-left: 30px;
-                            }
-                            .itensreader2{
+                        .itensreader{
+                            width: 20%;
+                            margin-top: 10px;
+                            margin-left: 30px;
+                        }
+                        .itensreader2{
                             border-left: 2px solid #004d43;
-
                             margin-left: 20px;
-                                width: 70%
-                            }
-
-
+                            width: 70%;
+                        }
                         .header h1 {
                             margin-left: 20px;
-
                             color: #2c3e50;
                             margin-bottom: 15px;
                             font-size: 19px;
                         }
                         .header p {
-                        margin-left: 20px;
-
+                            margin-left: 20px;
                             color: #7f8c8d;
                             font-size: 11px;
                             line-height: 1.6;
                             max-width: 800px;
-                        
                         }
                         .divider {
                             height: 3px;
@@ -963,6 +1334,14 @@
                             margin: 5px 0;
                             font-size: 10px;
                         }
+                        .creation-info {
+                            font-size: 10px;
+                            color: #666;
+                            margin-top: 10px;
+                            padding: 10px;
+                            background: #f9f9f9;
+                            border-radius: 5px;
+                        }
                         .footer {
                             text-align: center;
                             margin-top: 10px;
@@ -1013,18 +1392,14 @@
                     <!-- PRIMEIRA PÁGINA -->
                     <div class="first-page">
                         <div class="header">
-
                             <div class="itensreader">
-                            <img src="logo.png" alt="Recepção Interna" loading="lazy" style="width: 80px; height: 80px">
+                                <img src="logo.png" alt="Recepção Interna" loading="lazy" style="width: 80px; height: 80px">
                             </div>
-
                             <div class="itensreader2">
-                            <h1>ECO - CENTRO DE INFUSÕES</h1>
-                            <p>Nosso Centro de Infusão conta com um ambiente humanizado e seguro, nossa estrutura conta com salas climatizadas, com televisão e acesso a internet, kit lanche e uma linda vista para a Serra do Mar, para tornar sua aplicação mais agradável possível.</p>
+                                <h1>ECO - CENTRO DE INFUSÕES</h1>
+                                <p>Nosso Centro de Infusão conta com um ambiente humanizado e seguro, nossa estrutura conta com salas climatizadas, com televisão e acesso a internet, kit lanche e uma linda vista para a Serra do Mar, para tornar sua aplicação mais agradável possível.</p>
                             </div>
-
-
-                            </div>
+                        </div>
                         
                         <div class="divider"></div>
                         
@@ -1059,77 +1434,79 @@
                         </div>
                     </div>
                     
-                 <!-- SEGUNDA PÁGINA -->
-<div class="page-break"></div>
-<div class="second-page">
-    <div class="header">
-        <h1>ORÇAMENTO MÉDICO</h1>
-    </div>
-    
-    <div class="info-grid">
-        <div class="info-item">
-            <strong>Paciente:</strong><br>
-            ${budget.paciente}
-        </div>
-        <div class="info-item">
-            <strong>Médico:</strong><br>
-            ${budget.medico}
-        </div>
-        <div class="info-item">
-            <strong>Procedimento:</strong><br>
-            ${budget.procedimento}
-        </div>
-        <div class="info-item">
-            <strong>Data:</strong><br>
-            ${new Date().toLocaleDateString('pt-BR')}
-        </div>
-    </div>
-    
-    <table class="values-table">
-        <tr>
-            <th>TOTAL MATERIAL</th>
-            <td>R$ ${budget.total_material.toFixed(2)}</td>
-        </tr>
-        <tr>
-            <th>TOTAL MEDICAMENTO</th>
-            <td>R$ ${budget.total_medicamento.toFixed(2)}</td>
-        </tr>
-        <tr>
-            <th>TOTAL PROCEDIMENTO</th>
-            <td>R$ ${budget.total_procedimento.toFixed(2)}</td>
-        </tr>
-        <tr>
-            <th>DESCONTO</th>
-            <td>-R$ ${budget.desconto.toFixed(2)}</td>
-        </tr>
-        <tr class="total-row">
-            <th>VALOR FINAL</th>
-            <td>R$ ${budget.valor_final.toFixed(2)}</td>
-        </tr>
-    </table>
-    
-    <div class="payment-info">
-        <h3>FORMAS DE PAGAMENTO</h3>
-        <p><strong>Dinheiro, TED ou PIX:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-        <p><strong>Débito:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-        <p><strong>Crédito (à vista):</strong> R$ ${budget.valor_final.toFixed(2)}</p>
-        <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
-    </div>
-    
-    <!-- MOVENDO AS INFORMAÇÕES BANCÁRIAS E RODAPÉ PARA CIMA -->
-    <div class="bank-info">
-        <h3>DADOS BANCÁRIOS</h3>
-        <p><strong>PIX:</strong> 54.385.647/0001-08</p>
-        <p><strong>BANCO:</strong> Bradesco</p>
-        <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
-    </div>
-    
-    <div class="footer">
-        <p>SEJA BEM VINDO AO ECO - CENTRO DE INFUSÕES</p>
-    </div>
-</div>
-
-                     
+                    <!-- SEGUNDA PÁGINA -->
+                    <div class="page-break"></div>
+                    <div class="second-page">
+                        <div class="header">
+                            <h1>ORÇAMENTO MÉDICO</h1>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Paciente:</strong><br>
+                                ${budget.paciente}
+                            </div>
+                            <div class="info-item">
+                                <strong>Médico:</strong><br>
+                                ${budget.medico}
+                            </div>
+                            <div class="info-item">
+                                <strong>Procedimento:</strong><br>
+                                ${budget.procedimento}
+                            </div>
+                            <div class="info-item">
+                                <strong>Data:</strong><br>
+                                ${new Date().toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                        
+                        <table class="values-table">
+                            <tr>
+                                <th>TOTAL MATERIAL</th>
+                                <td>R$ ${budget.total_material.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>TOTAL MEDICAMENTO</th>
+                                <td>R$ ${budget.total_medicamento.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>TOTAL PROCEDIMENTO</th>
+                                <td>R$ ${budget.total_procedimento.toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>DESCONTO</th>
+                                <td>-R$ ${budget.desconto.toFixed(2)}</td>
+                            </tr>
+                            <tr class="total-row">
+                                <th>VALOR FINAL</th>
+                                <td>R$ ${budget.valor_final.toFixed(2)}</td>
+                            </tr>
+                        </table>
+                        
+                        <div class="creation-info">
+                            <strong>Orçamento criado por:</strong> ${budget.criadorNome} (${budget.criadoPor})<br>
+                            <strong>Data de criação:</strong> ${new Date(budget.dataCriacao).toLocaleString('pt-BR')}
+                        </div>
+                        
+                        <div class="payment-info">
+                            <h3>FORMAS DE PAGAMENTO</h3>
+                            <p><strong>Dinheiro, TED ou PIX:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+                            <p><strong>Débito:</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+                            <p><strong>Crédito (à vista):</strong> R$ ${budget.valor_final.toFixed(2)}</p>
+                            <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
+                        </div>
+                        
+                        <div class="bank-info">
+                            <h3>DADOS BANCÁRIOS</h3>
+                            <p><strong>PIX:</strong> 54.385.647/0001-08</p>
+                            <p><strong>BANCO:</strong> Bradesco</p>
+                            <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>SEJA BEM VINDO AO ECO - CENTRO DE INFUSÕES</p>
+                        </div>
+                    </div>
 
                     <script>
                         console.log('PDF carregado com sucesso!');
@@ -1141,6 +1518,7 @@
             pdfWindow.document.write(pdfContent);
             pdfWindow.document.close();
             
+            logAudit('GENERATE_PDF', `Gerou PDF para orçamento: ${budget.paciente} - ${budget.procedimento}`);
             showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success');
         }
 
@@ -1163,6 +1541,7 @@
             document.getElementById('monthlyBudgets').textContent = monthlyBudgets;
             
             updateCharts();
+            updateUserActivity();
         }
 
         function updateCharts() {
@@ -1241,30 +1620,47 @@
             container.innerHTML = html;
         }
 
+        function updateUserActivity() {
+            const userStats = {};
+            
+            Object.values(budgets).forEach(budget => {
+                const user = budget.criadorNome || budget.criadoPor;
+                userStats[user] = (userStats[user] || 0) + 1;
+            });
+            
+            const container = document.getElementById('userActivity');
+            
+            if (Object.keys(userStats).length === 0) {
+                container.innerHTML = '<p>Nenhuma atividade registrada.</p>';
+                return;
+            }
+            
+            let html = '<ul>';
+            Object.entries(userStats).forEach(([user, count]) => {
+                html += `<li><strong>${user}:</strong> ${count} orçamentos</li>`;
+            });
+            html += '</ul>';
+            
+            container.innerHTML = html;
+        }
+
         // Utility functions
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
             alertDiv.textContent = message;
             
-            document.body.insertBefore(alertDiv, document.body.firstChild);
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
             
             setTimeout(() => {
                 alertDiv.remove();
             }, 5000);
         }
+
+        function showLoginInterface() {
+            document.getElementById('mainInterface').classList.add('hidden');
+            document.getElementById('loginSection').classList.add('active');
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
