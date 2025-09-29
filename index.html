@@ -242,9 +242,19 @@
         }
 
         .alert {
-            padding: 15px;
+            padding: 12px 20px;
             border-radius: 5px;
-            margin-bottom: 20px;
+            margin-left: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .alert-success {
@@ -291,6 +301,14 @@
             color: red;
         }
 
+        .button-container {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -320,6 +338,16 @@
 
             .header-text {
                 width: 100%;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .alert {
+                margin-left: 0;
+                margin-top: 10px;
             }
         }
     </style>
@@ -424,7 +452,10 @@
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
+                    <div class="button-container">
+                        <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
+                        <div id="procedureAlert"></div>
+                    </div>
                 </form>
             </div>
 
@@ -511,9 +542,10 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 20px;">
+                <div class="button-container">
                     <button type="submit" class="btn btn-success">Gerar Orçamento</button>
                     <button type="button" class="btn btn-primary" onclick="generatePDF()" id="pdfBtn" disabled>Gerar PDF</button>
+                    <div id="budgetAlert"></div>
                 </div>
             </form>
         </div>
@@ -570,6 +602,8 @@
                 displayBudgets();
             } else if (sectionId === 'budget') {
                 loadProcedureOptions();
+                // Limpar alertas ao mudar de seção
+                clearAlert('budgetAlert');
             }
         }
 
@@ -586,7 +620,7 @@
                 return await response.json();
             } catch (error) {
                 console.error('Error saving to Firebase:', error);
-                showAlert('Erro ao salvar dados', 'error');
+                showAlert('Erro ao salvar dados', 'error', 'budgetAlert');
             }
         }
 
@@ -618,7 +652,7 @@
             
             await saveToFirebase('procedimentos', procedures);
             
-            showAlert('Procedimento salvo com sucesso!', 'success');
+            showAlert('Procedimento salvo com sucesso!', 'success', 'procedureAlert');
             document.getElementById('procedureForm').reset();
             displayProcedures();
         }
@@ -680,7 +714,7 @@
                 await saveToFirebase('procedimentos', procedures);
                 displayProcedures();
                 loadProcedureOptions();
-                showAlert('Procedimento excluído com sucesso!', 'success');
+                showAlert('Procedimento excluído com sucesso!', 'success', 'procedureAlert');
             }
         }
 
@@ -732,13 +766,13 @@
             
             // Validação do campo responsável
             if (!responsibleName.trim()) {
-                showAlert('Por favor, preencha o campo "Responsável pelo Orçamento"', 'error');
+                showAlert('Por favor, preencha o campo "Responsável pelo Orçamento"', 'error', 'budgetAlert');
                 document.getElementById('responsibleName').focus();
                 return;
             }
             
             if (!selectedProcedureId) {
-                showAlert('Selecione um procedimento', 'error');
+                showAlert('Selecione um procedimento', 'error', 'budgetAlert');
                 return;
             }
             
@@ -763,7 +797,7 @@
             
             await saveToFirebase('orcamentos', budgets);
             
-            showAlert('Orçamento gerado com sucesso!', 'success');
+            showAlert('Orçamento gerado com sucesso!', 'success', 'budgetAlert');
             document.getElementById('pdfBtn').disabled = false;
             
             updateDashboard();
@@ -825,14 +859,14 @@
                 await saveToFirebase('orcamentos', budgets);
                 displayBudgets();
                 updateDashboard();
-                showAlert('Orçamento excluído com sucesso!', 'success');
+                showAlert('Orçamento excluído com sucesso!', 'success', 'budgetAlert');
             }
         }
 
         // PDF Generation - VERSÃO COM IMAGENS ORIGINAIS
         function generatePDF() {
             if (!currentBudget) {
-                showAlert('Nenhum orçamento para gerar PDF', 'error');
+                showAlert('Nenhum orçamento para gerar PDF', 'error', 'budgetAlert');
                 return;
             }
             generateBudgetPDF(null, currentBudget);
@@ -1062,8 +1096,7 @@
                                 <p>SALA DE INFUSÃO - POLTRONA</p>
                             </div>
                             <div class="image-item">
-                                <img src="enfermagem.jpg" alt="Posto de Enfermagem" loading="lazy">
-                                <p>POSTO DE ENFERMAGEM</p>
+                                <img src="enfermagem.jpg" alt="Posto de Enfermagem</p>
                             </div>
                         </div>
                         
@@ -1169,7 +1202,7 @@
             pdfWindow.document.write(pdfContent);
             pdfWindow.document.close();
             
-            showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success');
+            showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success', 'budgetAlert');
         }
 
         // Dashboard functions
@@ -1270,16 +1303,26 @@
         }
 
         // Utility functions
-        function showAlert(message, type) {
+        function showAlert(message, type, containerId) {
+            const alertContainer = document.getElementById(containerId);
+            alertContainer.innerHTML = '';
+            
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
             alertDiv.textContent = message;
             
-            document.body.insertBefore(alertDiv, document.body.firstChild);
+            alertContainer.appendChild(alertDiv);
             
             setTimeout(() => {
-                alertDiv.remove();
+                clearAlert(containerId);
             }, 5000);
+        }
+
+        function clearAlert(containerId) {
+            const alertContainer = document.getElementById(containerId);
+            if (alertContainer) {
+                alertContainer.innerHTML = '';
+            }
         }
     </script>
 </body>
