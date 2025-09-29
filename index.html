@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECO - Sistema de Orçamentos</title>
-    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -70,22 +69,6 @@
             font-weight: 600;
             color: #2c3e50;
             display: block;
-        }
-
-        .logout-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            margin-top: 5px;
-            font-size: 12px;
-            width: 100%;
-        }
-
-        .logout-btn:hover {
-            background: #c0392b;
         }
 
         body {
@@ -215,19 +198,6 @@
             background: #c0392b;
         }
 
-        .btn-microsoft {
-            background: #2F2F2F;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .btn-microsoft:hover {
-            background: #000000;
-        }
-
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -335,26 +305,6 @@
             color: #7f8c8d;
         }
 
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 60vh;
-        }
-
-        .microsoft-logo {
-            width: 20px;
-            height: 20px;
-        }
-
-        .login-info {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-            border-left: 4px solid #2196F3;
-        }
-
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -397,251 +347,215 @@
 </head>
 <body>
     <div class="container">
-        <!-- Seção de Login -->
-        <div id="loginSection" class="content-section active">
-            <div class="login-container">
-                <div class="card" style="max-width: 400px; width: 100%;">
-                    <h3 style="text-align: center; margin-bottom: 20px;">Login do Sistema</h3>
-                    
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <p>Faça login com sua conta Microsoft corporativa</p>
+        <div class="header">
+            <div class="header-logo">
+                <img src="https://imgur.com/kpCeqqJ.png" alt="ECO - Centro de Infusões">
+            </div>
+            <div class="header-text">
+                <h1>ECO - CENTRO DE INFUSÕES</h1>
+                <p>Sistema de Geração de Orçamentos Médicos</p>
+            </div>
+            <div class="user-info">
+                <span id="userDisplayName">Carregando...</span>
+                <div id="userEmail" style="font-size: 12px; color: #666;"></div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+            <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
+            <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
+            <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
+            <button class="nav-tab" onclick="showSection('audit')">Auditoria</button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="content-section active">
+            <h2>Dashboard</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Total de Orçamentos</h4>
+                    <div class="value" id="totalBudgets">0</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Valor Total</h4>
+                    <div class="value" id="totalValue">R$ 0,00</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Procedimentos Cadastrados</h4>
+                    <div class="value" id="totalProcedures">0</div>
+                </div>
+                <div class="summary-item">
+                    <h4>Orçamentos Este Mês</h4>
+                    <div class="value" id="monthlyBudgets">0</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="chart-container">
+                        <h3>Orçamentos por Mês</h3>
+                        <canvas id="monthlyChart" width="400" height="200"></canvas>
                     </div>
-
-                    <button type="button" class="btn btn-microsoft" onclick="login()" style="width: 100%; padding: 15px;">
-                        <svg class="microsoft-logo" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M11.5 11.5H0V0H11.5V11.5Z" fill="#F1511B"/>
-                            <path d="M23 11.5H11.5V0H23V11.5Z" fill="#80CC28"/>
-                            <path d="M11.5 23H0V11.5H11.5V23Z" fill="#00ADEF"/>
-                            <path d="M23 23H11.5V11.5H23V23Z" fill="#FBBC09"/>
-                        </svg>
-                        Entrar com Microsoft
-                    </button>
-
-                    <div class="login-info">
-                        <h4>⚠️ Acesso Restrito</h4>
-                        <p style="font-size: 12px; margin-top: 8px;">
-                            Somente usuários autorizados com contas Microsoft corporativas podem acessar o sistema.
-                        </p>
+                </div>
+                <div class="col">
+                    <div class="chart-container">
+                        <h3>Procedimentos Mais Orçados</h3>
+                        <div id="procedureRanking"></div>
                     </div>
+                </div>
+            </div>
 
-                    <div id="loginStatus" class="alert hidden" style="margin-top: 15px;"></div>
+            <div class="row">
+                <div class="col">
+                    <div class="chart-container">
+                        <h3>Atividade por Usuário</h3>
+                        <div id="userActivity"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Interface Principal (após login) -->
-        <div id="mainInterface" class="hidden">
-            <div class="header">
-                <div class="header-logo">
-                    <img src="https://imgur.com/kpCeqqJ.png" alt="ECO - Centro de Infusões">
-                </div>
-                <div class="header-text">
-                    <h1>ECO - CENTRO DE INFUSÕES</h1>
-                    <p>Sistema de Geração de Orçamentos Médicos</p>
-                </div>
-                <div class="user-info">
-                    <span id="userDisplayName">Usuário</span>
-                    <div id="userEmail" style="font-size: 12px; color: #666;"></div>
-                    <button class="logout-btn" onclick="logout()">Sair</button>
-                </div>
-            </div>
-
-            <div class="nav-tabs">
-                <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
-                <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
-                <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
-                <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
-                <button class="nav-tab" onclick="showSection('audit')">Auditoria</button>
-            </div>
-
-            <!-- Dashboard Section -->
-            <div id="dashboard" class="content-section active">
-                <h2>Dashboard</h2>
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <h4>Total de Orçamentos</h4>
-                        <div class="value" id="totalBudgets">0</div>
-                    </div>
-                    <div class="summary-item">
-                        <h4>Valor Total</h4>
-                        <div class="value" id="totalValue">R$ 0,00</div>
-                    </div>
-                    <div class="summary-item">
-                        <h4>Procedimentos Cadastrados</h4>
-                        <div class="value" id="totalProcedures">0</div>
-                    </div>
-                    <div class="summary-item">
-                        <h4>Orçamentos Este Mês</h4>
-                        <div class="value" id="monthlyBudgets">0</div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col">
-                        <div class="chart-container">
-                            <h3>Orçamentos por Mês</h3>
-                            <canvas id="monthlyChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="chart-container">
-                            <h3>Procedimentos Mais Orçados</h3>
-                            <div id="procedureRanking"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col">
-                        <div class="chart-container">
-                            <h3>Atividade por Usuário</h3>
-                            <div id="userActivity"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Procedures Section -->
-            <div id="procedures" class="content-section">
-                <h2>Cadastro de Procedimentos</h2>
-                
-                <div class="card">
-                    <h3>Novo Procedimento</h3>
-                    <form id="procedureForm">
-                        <div class="row">
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="procedureName">Nome do Procedimento</label>
-                                    <input type="text" id="procedureName" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="materialCost">Custo Material (R$)</label>
-                                    <input type="number" id="materialCost" step="0.01" required>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="medicationCost">Custo Medicamento (R$)</label>
-                                    <input type="number" id="medicationCost" step="0.01" required>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="procedureCost">Custo Procedimento (R$)</label>
-                                    <input type="number" id="procedureCost" step="0.01" required>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="form-group">
-                                    <label for="discount">Desconto (R$)</label>
-                                    <input type="number" id="discount" step="0.01" value="0">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h3>Procedimentos Cadastrados</h3>
-                    <div id="proceduresTable"></div>
-                </div>
-            </div>
-
-            <!-- Budget Section -->
-            <div id="budget" class="content-section">
-                <h2>Novo Orçamento</h2>
-                
-                <form id="budgetForm">
+        <!-- Procedures Section -->
+        <div id="procedures" class="content-section">
+            <h2>Cadastro de Procedimentos</h2>
+            
+            <div class="card">
+                <h3>Novo Procedimento</h3>
+                <form id="procedureForm">
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
-                                <label for="patientName">Nome do Paciente</label>
-                                <input type="text" id="patientName" required>
+                                <label for="procedureName">Nome do Procedimento</label>
+                                <input type="text" id="procedureName" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="materialCost">Custo Material (R$)</label>
+                                <input type="number" id="materialCost" step="0.01" required>
                             </div>
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="doctorName">Médico Responsável</label>
-                                <input type="text" id="doctorName" required>
+                                <label for="medicationCost">Custo Medicamento (R$)</label>
+                                <input type="number" id="medicationCost" step="0.01" required>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="selectedProcedure">Procedimento</label>
-                        <select id="selectedProcedure" required>
-                            <option value="">Selecione um procedimento</option>
-                        </select>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="procedureCost">Custo Procedimento (R$)</label>
+                                <input type="number" id="procedureCost" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="discount">Desconto (R$)</label>
+                                <input type="number" id="discount" step="0.01" value="0">
+                            </div>
+                        </div>
                     </div>
+                    <button type="submit" class="btn btn-primary">Salvar Procedimento</button>
+                </form>
+            </div>
 
-                    <div id="budgetSummary" class="card hidden">
-                        <h3>Resumo do Orçamento</h3>
-                        <div class="summary-grid">
-                            <div class="summary-item">
-                                <h4>Total Material</h4>
-                                <div class="value" id="summaryMaterial">R$ 0,00</div>
-                            </div>
-                            <div class="summary-item">
-                                <h4>Total Medicamento</h4>
-                                <div class="value" id="summaryMedication">R$ 0,00</div>
-                            </div>
-                            <div class="summary-item">
-                                <h4>Total Procedimento</h4>
-                                <div class="value" id="summaryProcedure">R$ 0,00</div>
-                            </div>
-                            <div class="summary-item">
-                                <h4>Desconto</h4>
-                                <div class="value" id="summaryDiscount">R$ 0,00</div>
-                            </div>
-                            <div class="summary-item">
-                                <h4>Valor Final</h4>
-                                <div class="value" id="summaryTotal">R$ 0,00</div>
-                            </div>
+            <div class="card">
+                <h3>Procedimentos Cadastrados</h3>
+                <div id="proceduresTable"></div>
+            </div>
+        </div>
+
+        <!-- Budget Section -->
+        <div id="budget" class="content-section">
+            <h2>Novo Orçamento</h2>
+            
+            <form id="budgetForm">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="patientName">Nome do Paciente</label>
+                            <input type="text" id="patientName" required>
                         </div>
-
-                        <div style="margin-top: 20px;">
-                            <h4>Formas de Pagamento:</h4>
-                            <p><strong>Dinheiro, TED ou PIX:</strong> <span id="paymentCash">R$ 0,00</span></p>
-                            <p><strong>Débito:</strong> <span id="paymentDebit">R$ 0,00</span></p>
-                            <p><strong>Crédito (à vista):</strong> <span id="paymentCredit">R$ 0,00</span></p>
-                            <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="doctorName">Médico Responsável</label>
+                            <input type="text" id="doctorName" required>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="selectedProcedure">Procedimento</label>
+                    <select id="selectedProcedure" required>
+                        <option value="">Selecione um procedimento</option>
+                    </select>
+                </div>
 
-                        <div style="margin-top: 20px;">
-                            <h4>Dados Bancários:</h4>
-                            <p><strong>PIX:</strong> 54.385.647/0001-08</p>
-                            <p><strong>BANCO:</strong> Bradesco</p>
-                            <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
+                <div id="budgetSummary" class="card hidden">
+                    <h3>Resumo do Orçamento</h3>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <h4>Total Material</h4>
+                            <div class="value" id="summaryMaterial">R$ 0,00</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Total Medicamento</h4>
+                            <div class="value" id="summaryMedication">R$ 0,00</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Total Procedimento</h4>
+                            <div class="value" id="summaryProcedure">R$ 0,00</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Desconto</h4>
+                            <div class="value" id="summaryDiscount">R$ 0,00</div>
+                        </div>
+                        <div class="summary-item">
+                            <h4>Valor Final</h4>
+                            <div class="value" id="summaryTotal">R$ 0,00</div>
                         </div>
                     </div>
 
                     <div style="margin-top: 20px;">
-                        <button type="submit" class="btn btn-success">Gerar Orçamento</button>
-                        <button type="button" class="btn btn-primary" onclick="generatePDF()" id="pdfBtn" disabled>Gerar PDF</button>
+                        <h4>Formas de Pagamento:</h4>
+                        <p><strong>Dinheiro, TED ou PIX:</strong> <span id="paymentCash">R$ 0,00</span></p>
+                        <p><strong>Débito:</strong> <span id="paymentDebit">R$ 0,00</span></p>
+                        <p><strong>Crédito (à vista):</strong> <span id="paymentCredit">R$ 0,00</span></p>
+                        <p><em>Para parcelamentos a partir de 2x, solicite uma cotação</em></p>
                     </div>
-                </form>
-            </div>
 
-            <!-- Budgets List Section -->
-            <div id="budgets" class="content-section">
-                <h2>Orçamentos Gerados</h2>
-                <div id="budgetsTable"></div>
-            </div>
-
-            <!-- Auditoria Section -->
-            <div id="audit" class="content-section">
-                <h2>Auditoria do Sistema</h2>
-                <div class="card">
-                    <h3>Log de Atividades</h3>
-                    <div id="auditLog"></div>
+                    <div style="margin-top: 20px;">
+                        <h4>Dados Bancários:</h4>
+                        <p><strong>PIX:</strong> 54.385.647/0001-08</p>
+                        <p><strong>BANCO:</strong> Bradesco</p>
+                        <p><strong>AGÊNCIA:</strong> 2880 <strong>CONTA CORRENTE:</strong> 1458-3</p>
+                    </div>
                 </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">Gerar Orçamento</button>
+                    <button type="button" class="btn btn-primary" onclick="generatePDF()" id="pdfBtn" disabled>Gerar PDF</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Budgets List Section -->
+        <div id="budgets" class="content-section">
+            <h2>Orçamentos Gerados</h2>
+            <div id="budgetsTable"></div>
+        </div>
+
+        <!-- Auditoria Section -->
+        <div id="audit" class="content-section">
+            <h2>Auditoria do Sistema</h2>
+            <div class="card">
+                <h3>Log de Atividades</h3>
+                <div id="auditLog"></div>
             </div>
         </div>
     </div>
@@ -650,37 +564,15 @@
         // Firebase configuration
         const FIREBASE_URL = 'https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com';
         
-        // MSAL Configuration - COM SEU CLIENT ID
-        const msalConfig = {
-            auth: {
-                clientId: "0d209088-5b8d-4abf-a118-b8399a7ae200", // SEU CLIENT ID AQUI
-                authority: "https://login.microsoftonline.com/common",
-                redirectUri: window.location.origin, // Usa a origem atual
-            },
-            cache: {
-                cacheLocation: "sessionStorage",
-                storeAuthStateInCookie: false,
-            }
-        };
-
-        const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-        // Scopes para acesso básico do perfil
-        const loginRequest = {
-            scopes: ["User.Read", "openid", "profile"]
-        };
-
         let procedures = {};
         let budgets = {};
         let currentBudget = null;
         let currentUser = null;
-        let users = {};
         let auditLog = {};
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            initializeMSAL();
-            loadUsers();
+            initializeUser();
             loadProcedures();
             loadBudgets();
             loadAuditLog();
@@ -691,136 +583,61 @@
             document.getElementById('selectedProcedure').addEventListener('change', updateBudgetSummary);
         });
 
-        // Sistema de Autenticação MSAL
-        async function initializeMSAL() {
+        // Sistema de Usuário Simplificado
+        async function initializeUser() {
             try {
-                await msalInstance.initialize();
-                
-                // Verifica se há resposta de redirecionamento
-                const response = await msalInstance.handleRedirectPromise();
-                if (response) {
-                    // Login bem-sucedido via redirecionamento
-                    await handleLoginSuccess(response);
-                } else {
-                    // Verifica se já está logado
-                    const accounts = msalInstance.getAllAccounts();
-                    if (accounts.length > 0) {
-                        // Usuário já está logado
-                        await handleLoginSuccess({ account: accounts[0] });
-                    }
-                }
+                // Tenta obter informações do usuário do SharePoint
+                // Se estiver em um ambiente SharePoint, pega as informações do contexto
+                await getSharePointUserInfo();
             } catch (error) {
-                console.error('Erro na inicialização MSAL:', error);
-                showLoginStatus('Erro na inicialização da autenticação', 'error');
+                console.warn('Não foi possível obter informações do SharePoint:', error);
+                // Fallback: usa informações básicas
+                currentUser = {
+                    username: 'usuario.sharepoint',
+                    nome: 'Usuário SharePoint',
+                    email: 'usuario@sharepoint.com',
+                    loginTime: new Date().toISOString()
+                };
+                updateUserInterface();
             }
         }
 
-        async function login() {
+        async function getSharePointUserInfo() {
+            // Esta função tenta obter informações do usuário do contexto do SharePoint
             try {
-                showLoginStatus('Redirecionando para Microsoft...', 'success');
-                
-                // Usando popup para login
-                const response = await msalInstance.loginPopup(loginRequest);
-                await handleLoginSuccess(response);
-            } catch (error) {
-                console.error('Erro no login:', error);
-                
-                if (error.errorCode === 'user_cancelled') {
-                    showLoginStatus('Login cancelado pelo usuário', 'error');
-                } else {
-                    showLoginStatus('Erro no login. Tente novamente.', 'error');
-                }
-            }
-        }
-
-        async function handleLoginSuccess(response) {
-            const account = response.account;
-            
-            if (!account) {
-                showLoginStatus('Erro: Conta não encontrada', 'error');
-                return;
-            }
-
-            // Valida se é um email corporativo (opcional)
-            if (!isCorporateEmail(account.username)) {
-                showLoginStatus('Acesso permitido apenas para emails corporativos', 'error');
-                await logout();
-                return;
-            }
-
-            currentUser = {
-                username: account.username,
-                nome: account.name || account.username.split('@')[0],
-                email: account.username,
-                tenantId: account.tenantId,
-                localAccountId: account.localAccountId,
-                loginTime: new Date().toISOString()
-            };
-
-            // Salvar sessão
-            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            // Registrar login no audit log
-            await logAudit('LOGIN', `Usuário autenticado via Microsoft: ${currentUser.nome} (${currentUser.email})`);
-            
-            showLoginStatus(`Autenticação bem-sucedida! Bem-vindo, ${currentUser.nome}`, 'success');
-            
-            setTimeout(() => {
-                showMainInterface();
-            }, 1000);
-        }
-
-        function isCorporateEmail(email) {
-            // Lista de domínios corporativos permitidos - ADICIONE SEUS DOMÍNIOS AQUI
-            const corporateDomains = [
-                'eco.com.br',
-                'empresa.com',
-                'dominio-corporativo.com'
-                'ecooncologia.com.br'
-                // Adicione outros domínios corporativos aqui
-            ];
-            
-            const domain = email.toLowerCase().split('@')[1];
-            return corporateDomains.includes(domain) || domain.endsWith('.onmicrosoft.com');
-        }
-
-        async function logout() {
-            if (currentUser) {
-                await logAudit('LOGOUT', `Usuário ${currentUser.nome} fez logout`);
-            }
-            
-            // Limpa sessão local
-            currentUser = null;
-            sessionStorage.removeItem('currentUser');
-            
-            // Logout da Microsoft
-            try {
-                await msalInstance.logoutPopup({
-                    postLogoutRedirectUri: window.location.origin,
-                    mainWindowRedirectUri: window.location.origin
+                // Método 1: SharePoint REST API
+                const response = await fetch('/_api/web/currentuser', {
+                    headers: {
+                        'Accept': 'application/json;odata=verbose',
+                    },
+                    credentials: 'include'
                 });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.d;
+                    currentUser = {
+                        username: user.LoginName,
+                        nome: user.Title,
+                        email: user.Email,
+                        loginTime: new Date().toISOString()
+                    };
+                } else {
+                    throw new Error('Não foi possível obter informações do usuário');
+                }
             } catch (error) {
-                console.log('Logout MSAL:', error);
+                // Método 2: Se estiver em uma Web Part, pode usar diferentes métodos
+                console.warn('Falha ao obter usuário do SharePoint:', error);
+                throw error;
             }
             
-            // Força recarregamento para limpar estado
-            window.location.reload();
+            updateUserInterface();
+            await logAudit('ACCESS', `Usuário acessou o sistema: ${currentUser.nome} (${currentUser.email})`);
         }
 
-        function showLoginStatus(message, type) {
-            const statusDiv = document.getElementById('loginStatus');
-            statusDiv.textContent = message;
-            statusDiv.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
-            statusDiv.classList.remove('hidden');
-        }
-
-        function showMainInterface() {
-            document.getElementById('loginSection').classList.remove('active');
-            document.getElementById('mainInterface').classList.remove('hidden');
+        function updateUserInterface() {
             document.getElementById('userDisplayName').textContent = currentUser.nome;
             document.getElementById('userEmail').textContent = currentUser.email;
-            
-            updateDashboard();
         }
 
         // Sistema de Auditoria
@@ -906,11 +723,6 @@
 
         // Navigation functions
         function showSection(sectionId) {
-            if (!currentUser) {
-                showLoginInterface();
-                return;
-            }
-            
             const sections = document.querySelectorAll('.content-section');
             sections.forEach(section => section.classList.remove('active'));
             
@@ -966,7 +778,7 @@
             event.preventDefault();
             
             if (!currentUser) {
-                showAlert('Faça login para cadastrar procedimentos', 'error');
+                showAlert('Erro: Informações do usuário não disponíveis', 'error');
                 return;
             }
             
@@ -1048,7 +860,7 @@
 
         async function deleteProcedure(procedureId) {
             if (!currentUser) {
-                showAlert('Faça login para executar esta ação', 'error');
+                showAlert('Erro: Informações do usuário não disponíveis', 'error');
                 return;
             }
             
@@ -1106,7 +918,7 @@
             event.preventDefault();
             
             if (!currentUser) {
-                showAlert('Faça login para gerar orçamentos', 'error');
+                showAlert('Erro: Informações do usuário não disponíveis', 'error');
                 return;
             }
             
@@ -1135,9 +947,7 @@
                 criadoPor: currentUser.username,
                 criadorNome: currentUser.nome,
                 criadorEmail: currentUser.email,
-                dataCriacao: new Date().toISOString(),
-                ultimaModificacao: new Date().toISOString(),
-                modificadoPor: currentUser.username
+                dataCriacao: new Date().toISOString()
             };
             
             const budgetId = 'orcamento_' + Date.now();
@@ -1204,7 +1014,7 @@
 
         async function deleteBudget(budgetId) {
             if (!currentUser) {
-                showAlert('Faça login para executar esta ação', 'error');
+                showAlert('Erro: Informações do usuário não disponíveis', 'error');
                 return;
             }
             
@@ -1411,7 +1221,7 @@
             showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success');
         }
 
-        // Dashboard functions (mantidas iguais)
+        // Dashboard functions
         function updateDashboard() {
             const totalBudgets = Object.keys(budgets).length;
             const totalValue = Object.values(budgets).reduce((sum, budget) => sum + budget.valor_final, 0);
@@ -1545,17 +1355,6 @@
                 alertDiv.remove();
             }, 5000);
         }
-
-        function showLoginInterface() {
-            document.getElementById('mainInterface').classList.add('hidden');
-            document.getElementById('loginSection').classList.add('active');
-        }
-
-        // Carregar usuários (para histórico)
-        async function loadUsers() {
-            users = await loadFromFirebase('usuarios') || {};
-        }
     </script>
 </body>
 </html>
-
