@@ -650,12 +650,12 @@
         // Firebase configuration
         const FIREBASE_URL = 'https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com';
         
-        // MSAL Configuration - ATUALIZE COM SEUS DADOS DO AZURE AD
+        // MSAL Configuration - COM SEU CLIENT ID
         const msalConfig = {
             auth: {
-                clientId: "0d209088-5b8d-4abf-a118-b8399a7ae2c0", // Substitua pelo seu Client ID do Azure AD
-                authority: "https://login.microsoftonline.com/common", // Ou "tenant-id" para um tenant específico
-                redirectUri: "http://localhost:3000", // Ou a URL onde seu app está hospedado
+                clientId: "0d209088-5b8d-4abf-a118-b8399a7ae200", // SEU CLIENT ID AQUI
+                authority: "https://login.microsoftonline.com/common",
+                redirectUri: window.location.origin, // Usa a origem atual
             },
             cache: {
                 cacheLocation: "sessionStorage",
