@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ECO - Sistema de Orçamentos</title>
+    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.24.0/js/msal-browser.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -214,6 +215,19 @@
             background: #c0392b;
         }
 
+        .btn-microsoft {
+            background: #2F2F2F;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-microsoft:hover {
+            background: #000000;
+        }
+
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -328,6 +342,19 @@
             min-height: 60vh;
         }
 
+        .microsoft-logo {
+            width: 20px;
+            height: 20px;
+        }
+
+        .login-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -375,29 +402,29 @@
             <div class="login-container">
                 <div class="card" style="max-width: 400px; width: 100%;">
                     <h3 style="text-align: center; margin-bottom: 20px;">Login do Sistema</h3>
-                    <form id="loginForm">
-                        <div class="form-group">
-                            <label for="username">Usuário SharePoint</label>
-                            <input type="text" id="username" required placeholder="seu.usuario@dominio.com">
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Senha</label>
-                            <input type="password" id="password" required placeholder="Sua senha">
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar no Sistema</button>
-                    </form>
-                    <div id="loginError" class="alert alert-error hidden" style="margin-top: 15px;"></div>
                     
-                    <!-- Modo de desenvolvimento -->
-                    <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107;">
-                        <h4 style="color: #856404; margin-bottom: 10px;">Modo Desenvolvimento</h4>
-                        <p style="color: #856404; font-size: 12px; margin-bottom: 10px;">
-                            Para teste, use qualquer usuário e senha. Em produção, será integrado com SharePoint.
-                        </p>
-                        <button type="button" class="btn" style="background: #ffc107; color: #856404; width: 100%; font-size: 12px;" onclick="demoLogin()">
-                            Login Demo
-                        </button>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <p>Faça login com sua conta Microsoft corporativa</p>
                     </div>
+
+                    <button type="button" class="btn btn-microsoft" onclick="login()" style="width: 100%; padding: 15px;">
+                        <svg class="microsoft-logo" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11.5 11.5H0V0H11.5V11.5Z" fill="#F1511B"/>
+                            <path d="M23 11.5H11.5V0H23V11.5Z" fill="#80CC28"/>
+                            <path d="M11.5 23H0V11.5H11.5V23Z" fill="#00ADEF"/>
+                            <path d="M23 23H11.5V11.5H23V23Z" fill="#FBBC09"/>
+                        </svg>
+                        Entrar com Microsoft
+                    </button>
+
+                    <div class="login-info">
+                        <h4>⚠️ Acesso Restrito</h4>
+                        <p style="font-size: 12px; margin-top: 8px;">
+                            Somente usuários autorizados com contas Microsoft corporativas podem acessar o sistema.
+                        </p>
+                    </div>
+
+                    <div id="loginStatus" class="alert hidden" style="margin-top: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -414,6 +441,7 @@
                 </div>
                 <div class="user-info">
                     <span id="userDisplayName">Usuário</span>
+                    <div id="userEmail" style="font-size: 12px; color: #666;"></div>
                     <button class="logout-btn" onclick="logout()">Sair</button>
                 </div>
             </div>
@@ -622,9 +650,26 @@
         // Firebase configuration
         const FIREBASE_URL = 'https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com';
         
-        // Configuração SharePoint (altere para sua URL)
-        const SHAREPOINT_SITE = 'https://seusite.sharepoint.com/sites/eco';
-        
+        // MSAL Configuration - ATUALIZE COM SEUS DADOS DO AZURE AD
+        const msalConfig = {
+            auth: {
+                clientId: "0d209088-5b8d-4abf-a118-b8399a7ae2c0", // Substitua pelo seu Client ID do Azure AD
+                authority: "https://login.microsoftonline.com/common", // Ou "tenant-id" para um tenant específico
+                redirectUri: "http://localhost:3000", // Ou a URL onde seu app está hospedado
+            },
+            cache: {
+                cacheLocation: "sessionStorage",
+                storeAuthStateInCookie: false,
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+        // Scopes para acesso básico do perfil
+        const loginRequest = {
+            scopes: ["User.Read", "openid", "profile"]
+        };
+
         let procedures = {};
         let budgets = {};
         let currentBudget = null;
@@ -634,7 +679,7 @@
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthentication();
+            initializeMSAL();
             loadUsers();
             loadProcedures();
             loadBudgets();
@@ -644,143 +689,137 @@
             document.getElementById('procedureForm').addEventListener('submit', saveProcedure);
             document.getElementById('budgetForm').addEventListener('submit', generateBudget);
             document.getElementById('selectedProcedure').addEventListener('change', updateBudgetSummary);
-            document.getElementById('loginForm').addEventListener('submit', handleLogin);
         });
 
-        // Sistema de Autenticação
-        async function loadUsers() {
-            users = await loadFromFirebase('usuarios') || {};
-        }
-
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            showAlert('Autenticando...', 'success');
-            
-            // Tenta autenticar com SharePoint primeiro
-            const sharepointAuth = await authenticateWithSharePoint(username, password);
-            
-            if (sharepointAuth.success) {
-                await handleSuccessfulLogin(username, sharepointAuth.user);
-            } else {
-                // Fallback para autenticação local (apenas desenvolvimento)
-                if (await authenticateLocalUser(username, password)) {
-                    await handleSuccessfulLogin(username, { DisplayName: username });
-                } else {
-                    document.getElementById('loginError').textContent = 'Usuário ou senha inválidos';
-                    document.getElementById('loginError').classList.remove('hidden');
-                    showAlert('Falha na autenticação', 'error');
-                }
-            }
-        }
-
-        // Autenticação com SharePoint
-        async function authenticateWithSharePoint(username, password) {
+        // Sistema de Autenticação MSAL
+        async function initializeMSAL() {
             try {
-                // Método 1: Usando SharePoint REST API (requer CORS configurado)
-                const endpoint = `${SHAREPOINT_SITE}/_api/web/currentuser`;
+                await msalInstance.initialize();
                 
-                const response = await fetch(endpoint, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose'
-                    },
-                    credentials: 'include'
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    return {
-                        success: true,
-                        user: data.d
-                    };
+                // Verifica se há resposta de redirecionamento
+                const response = await msalInstance.handleRedirectPromise();
+                if (response) {
+                    // Login bem-sucedido via redirecionamento
+                    await handleLoginSuccess(response);
+                } else {
+                    // Verifica se já está logado
+                    const accounts = msalInstance.getAllAccounts();
+                    if (accounts.length > 0) {
+                        // Usuário já está logado
+                        await handleLoginSuccess({ account: accounts[0] });
+                    }
                 }
-                
-                // Se a autenticação direta falhar, retorna falso
-                return { success: false };
             } catch (error) {
-                console.warn('Autenticação SharePoint falhou, usando modo local:', error);
-                return { success: false };
+                console.error('Erro na inicialização MSAL:', error);
+                showLoginStatus('Erro na inicialização da autenticação', 'error');
             }
         }
 
-        // Autenticação local (para desenvolvimento)
-        async function authenticateLocalUser(username, password) {
-            // Em produção, remova esta função e use apenas SharePoint
-            if (users[username]) {
-                return users[username].password === password;
-            } else {
-                // Cria usuário demo
-                users[username] = {
-                    nome: username.split('@')[0],
-                    password: password,
-                    email: username,
-                    criadoEm: new Date().toISOString(),
-                    isLocal: true
-                };
-                await saveToFirebase('usuarios', users);
-                return true;
+        async function login() {
+            try {
+                showLoginStatus('Redirecionando para Microsoft...', 'success');
+                
+                // Usando popup para login
+                const response = await msalInstance.loginPopup(loginRequest);
+                await handleLoginSuccess(response);
+            } catch (error) {
+                console.error('Erro no login:', error);
+                
+                if (error.errorCode === 'user_cancelled') {
+                    showLoginStatus('Login cancelado pelo usuário', 'error');
+                } else {
+                    showLoginStatus('Erro no login. Tente novamente.', 'error');
+                }
             }
         }
 
-        async function handleSuccessfulLogin(username, userData) {
-            currentUser = {
-                username: username,
-                nome: userData.DisplayName || username.split('@')[0],
-                email: username,
-                loginTime: new Date().toISOString(),
-                isSharePoint: !userData.isLocal
-            };
+        async function handleLoginSuccess(response) {
+            const account = response.account;
             
+            if (!account) {
+                showLoginStatus('Erro: Conta não encontrada', 'error');
+                return;
+            }
+
+            // Valida se é um email corporativo (opcional)
+            if (!isCorporateEmail(account.username)) {
+                showLoginStatus('Acesso permitido apenas para emails corporativos', 'error');
+                await logout();
+                return;
+            }
+
+            currentUser = {
+                username: account.username,
+                nome: account.name || account.username.split('@')[0],
+                email: account.username,
+                tenantId: account.tenantId,
+                localAccountId: account.localAccountId,
+                loginTime: new Date().toISOString()
+            };
+
             // Salvar sessão
             sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             
             // Registrar login no audit log
-            await logAudit('LOGIN', `Usuário ${currentUser.nome} fez login no sistema`);
+            await logAudit('LOGIN', `Usuário autenticado via Microsoft: ${currentUser.nome} (${currentUser.email})`);
             
-            showAlert(`Bem-vindo, ${currentUser.nome}!`, 'success');
-            showMainInterface();
-        }
-
-        function demoLogin() {
-            // Login rápido para desenvolvimento
-            document.getElementById('username').value = 'usuario.demo@eco.com';
-            document.getElementById('password').value = 'demo123';
-            handleLogin(new Event('submit'));
-        }
-
-        function checkAuthentication() {
-            const savedUser = sessionStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
+            showLoginStatus(`Autenticação bem-sucedida! Bem-vindo, ${currentUser.nome}`, 'success');
+            
+            setTimeout(() => {
                 showMainInterface();
+            }, 1000);
+        }
+
+        function isCorporateEmail(email) {
+            // Lista de domínios corporativos permitidos - ADICIONE SEUS DOMÍNIOS AQUI
+            const corporateDomains = [
+                'eco.com.br',
+                'empresa.com',
+                'dominio-corporativo.com'
+                // Adicione outros domínios corporativos aqui
+            ];
+            
+            const domain = email.toLowerCase().split('@')[1];
+            return corporateDomains.includes(domain) || domain.endsWith('.onmicrosoft.com');
+        }
+
+        async function logout() {
+            if (currentUser) {
+                await logAudit('LOGOUT', `Usuário ${currentUser.nome} fez logout`);
             }
+            
+            // Limpa sessão local
+            currentUser = null;
+            sessionStorage.removeItem('currentUser');
+            
+            // Logout da Microsoft
+            try {
+                await msalInstance.logoutPopup({
+                    postLogoutRedirectUri: window.location.origin,
+                    mainWindowRedirectUri: window.location.origin
+                });
+            } catch (error) {
+                console.log('Logout MSAL:', error);
+            }
+            
+            // Força recarregamento para limpar estado
+            window.location.reload();
+        }
+
+        function showLoginStatus(message, type) {
+            const statusDiv = document.getElementById('loginStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `alert alert-${type === 'error' ? 'error' : 'success'}`;
+            statusDiv.classList.remove('hidden');
         }
 
         function showMainInterface() {
             document.getElementById('loginSection').classList.remove('active');
             document.getElementById('mainInterface').classList.remove('hidden');
             document.getElementById('userDisplayName').textContent = currentUser.nome;
+            document.getElementById('userEmail').textContent = currentUser.email;
             
             updateDashboard();
-        }
-
-        async function logout() {
-            await logAudit('LOGOUT', `Usuário ${currentUser.nome} fez logout`);
-            
-            currentUser = null;
-            sessionStorage.removeItem('currentUser');
-            
-            document.getElementById('mainInterface').classList.add('hidden');
-            document.getElementById('loginSection').classList.add('active');
-            document.getElementById('loginForm').reset();
-            document.getElementById('loginError').classList.add('hidden');
-            
-            showAlert('Logout realizado com sucesso!', 'success');
         }
 
         // Sistema de Auditoria
@@ -797,6 +836,7 @@
                 details: details,
                 user: currentUser.username,
                 userName: currentUser.nome,
+                userEmail: currentUser.email,
                 timestamp: new Date().toISOString(),
                 ip: await getClientIP()
             };
@@ -804,7 +844,6 @@
             auditLog[logId] = logEntry;
             await saveToFirebase('audit', auditLog);
             
-            // Atualiza a exibição se estiver na aba de auditoria
             if (document.getElementById('audit').classList.contains('active')) {
                 displayAuditLog();
             }
@@ -830,7 +869,7 @@
             
             const sortedLogs = Object.entries(auditLog)
                 .sort(([,a], [,b]) => new Date(b.timestamp) - new Date(a.timestamp))
-                .slice(0, 100); // Mostra apenas os 100 mais recentes
+                .slice(0, 100);
             
             let html = `
                 <table class="table">
@@ -838,6 +877,7 @@
                         <tr>
                             <th>Data/Hora</th>
                             <th>Usuário</th>
+                            <th>Email</th>
                             <th>Ação</th>
                             <th>Detalhes</th>
                             <th>IP</th>
@@ -851,6 +891,7 @@
                     <tr>
                         <td>${new Date(log.timestamp).toLocaleString('pt-BR')}</td>
                         <td>${log.userName}</td>
+                        <td style="font-size: 12px;">${log.userEmail}</td>
                         <td><span style="padding: 2px 8px; background: #e3f2fd; border-radius: 3px; font-size: 12px;">${log.action}</span></td>
                         <td>${log.details}</td>
                         <td style="font-size: 12px; color: #666;">${log.ip}</td>
@@ -869,21 +910,15 @@
                 return;
             }
             
-            // Hide all sections
             const sections = document.querySelectorAll('.content-section');
             sections.forEach(section => section.classList.remove('active'));
             
-            // Remove active class from all tabs
             const tabs = document.querySelectorAll('.nav-tab');
             tabs.forEach(tab => tab.classList.remove('active'));
             
-            // Show selected section
             document.getElementById(sectionId).classList.add('active');
-            
-            // Add active class to clicked tab
             event.target.classList.add('active');
             
-            // Refresh data when switching to certain sections
             if (sectionId === 'dashboard') {
                 updateDashboard();
             } else if (sectionId === 'procedures') {
@@ -942,6 +977,7 @@
                 desconto: parseFloat(document.getElementById('discount').value) || 0,
                 criadoPor: currentUser.username,
                 criadorNome: currentUser.nome,
+                criadorEmail: currentUser.email,
                 dataCriacao: new Date().toISOString()
             };
             
@@ -1070,7 +1106,6 @@
             
             if (!currentUser) {
                 showAlert('Faça login para gerar orçamentos', 'error');
-                showLoginInterface();
                 return;
             }
             
@@ -1096,9 +1131,9 @@
                 desconto: procedure.desconto,
                 valor_final: total,
                 data: new Date().toISOString().split('T')[0],
-                // Novos campos de logging
                 criadoPor: currentUser.username,
                 criadorNome: currentUser.nome,
+                criadorEmail: currentUser.email,
                 dataCriacao: new Date().toISOString(),
                 ultimaModificacao: new Date().toISOString(),
                 modificadoPor: currentUser.username
@@ -1153,7 +1188,7 @@
                         <td>${budget.medico}</td>
                         <td>${budget.procedimento}</td>
                         <td>R$ ${budget.valor_final.toFixed(2)}</td>
-                        <td>${budget.criadorNome || budget.criadoPor}</td>
+                        <td>${budget.criadorNome}</td>
                         <td>
                             <button class="btn btn-primary" onclick="generateBudgetPDF('${id}')">PDF</button>
                             <button class="btn btn-danger" onclick="deleteBudget('${id}')">Excluir</button>
@@ -1184,7 +1219,7 @@
             }
         }
 
-        // PDF Generation
+        // PDF Generation (mantido igual)
         function generatePDF() {
             if (!currentBudget) {
                 showAlert('Nenhum orçamento para gerar PDF', 'error');
@@ -1205,184 +1240,37 @@
                     <meta charset="UTF-8">
                     <title>Orçamento - ${budget.paciente}</title>
                     <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            background: white;
-                        }
-                        .page-break {
-                            page-break-before: always;
-                        }
-                        .first-page {
-                            min-height: 95vh;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .header {
-                            text-align: left;
-                            padding: 40px 20px 20px 20px;
-                            background: white;
-                            display: flex;
-                        }
-                        .itensreader{
-                            width: 20%;
-                            margin-top: 10px;
-                            margin-left: 30px;
-                        }
-                        .itensreader2{
-                            border-left: 2px solid #004d43;
-                            margin-left: 20px;
-                            width: 70%;
-                        }
-                        .header h1 {
-                            margin-left: 20px;
-                            color: #2c3e50;
-                            margin-bottom: 15px;
-                            font-size: 19px;
-                        }
-                        .header p {
-                            margin-left: 20px;
-                            color: #7f8c8d;
-                            font-size: 11px;
-                            line-height: 1.6;
-                            max-width: 800px;
-                        }
-                        .divider {
-                            height: 3px;
-                            background: red;
-                            margin: 30px auto;
-                            width: 90%;
-                        }
-                        .images-container {
-                            display: flex;
-                            justify-content: space-between;
-                            padding: 30px;
-                            background: #f8f9fa;
-                            border-bottom: 2px solid #ddd;
-                            flex-wrap: wrap;
-                        }
-                        .image-item {
-                            text-align: center;
-                            flex: 1;
-                            margin: 10px;
-                            min-width: 30%;
-                        }
-                        .image-item img {
-                            max-width: 100%;
-                            height: 200px;
-                            object-fit: cover;
-                            border-radius: 8px;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        }
-                        .image-item p {
-                            margin-top: 10px;
-                            font-size: 14px;
-                            color: #555;
-                            font-weight: bold;
-                        }
-                        .second-page {
-                            padding: 40px;
-                        }
-                        .info-grid {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            gap: 25px;
-                            margin-bottom: 40px;
-                        }
-                        .info-item {
-                            padding: 20px;
-                            background: #f8f9fa;
-                            border-radius: 8px;
-                            border-left: 5px solid #3498db;
-                            font-size: 16px;
-                        }
-                        .values-table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 30px 0;
-                            font-size: 16px;
-                        }
-                        .values-table th,
-                        .values-table td {
-                            padding: 15px;
-                            text-align: right;
-                            border-bottom: 2px solid #ddd;
-                        }
-                        .values-table th {
-                            background: #f8f9fa;
-                            text-align: left;
-                            font-weight: bold;
-                        }
-                        .total-row {
-                            background: #e8f5e8;
-                            font-weight: bold;
-                            font-size: 20px;
-                        }
-                        .payment-info {
-                            background: #f0f8ff;
-                            padding: 0px;
-                            border-radius: 10px;
-                            margin: 5px 0;
-                            font-size: 10px;
-                        }
-                        .bank-info {
-                            background: #fff5f5;
-                            padding: 0px;
-                            padding: 5px;
-                            border-radius: 10px;
-                            margin: 5px 0;
-                            font-size: 10px;
-                        }
-                        .creation-info {
-                            font-size: 10px;
-                            color: #666;
-                            margin-top: 10px;
-                            padding: 10px;
-                            background: #f9f9f9;
-                            border-radius: 5px;
-                        }
-                        .footer {
-                            text-align: center;
-                            margin-top: 10px;
-                            color: #7f8c8d;
-                            font-size: 14px;
-                            padding: 15px;
-                            border-top: 2px solid #ddd;
-                        }
-                        .print-btn {
-                            position: fixed;
-                            top: 20px;
-                            right: 20px;
-                            padding: 15px 30px;
-                            background: #85BFCD;
-                            color: white;
-                            border: none;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 16px;
-                            z-index: 1000;
-                            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                        }
-                        .print-btn:hover {
-                            background: #2980b9;
-                        }
+                        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: white; }
+                        .page-break { page-break-before: always; }
+                        .first-page { min-height: 95vh; display: flex; flex-direction: column; }
+                        .header { text-align: left; padding: 40px 20px 20px 20px; background: white; display: flex; }
+                        .itensreader{ width: 20%; margin-top: 10px; margin-left: 30px; }
+                        .itensreader2{ border-left: 2px solid #004d43; margin-left: 20px; width: 70%; }
+                        .header h1 { margin-left: 20px; color: #2c3e50; margin-bottom: 15px; font-size: 19px; }
+                        .header p { margin-left: 20px; color: #7f8c8d; font-size: 11px; line-height: 1.6; max-width: 800px; }
+                        .divider { height: 3px; background: red; margin: 30px auto; width: 90%; }
+                        .images-container { display: flex; justify-content: space-between; padding: 30px; background: #f8f9fa; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+                        .image-item { text-align: center; flex: 1; margin: 10px; min-width: 30%; }
+                        .image-item img { max-width: 100%; height: 200px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                        .image-item p { margin-top: 10px; font-size: 14px; color: #555; font-weight: bold; }
+                        .second-page { padding: 40px; }
+                        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 40px; }
+                        .info-item { padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 5px solid #3498db; font-size: 16px; }
+                        .values-table { width: 100%; border-collapse: collapse; margin: 30px 0; font-size: 16px; }
+                        .values-table th, .values-table td { padding: 15px; text-align: right; border-bottom: 2px solid #ddd; }
+                        .values-table th { background: #f8f9fa; text-align: left; font-weight: bold; }
+                        .total-row { background: #e8f5e8; font-weight: bold; font-size: 20px; }
+                        .payment-info { background: #f0f8ff; padding: 0px; border-radius: 10px; margin: 5px 0; font-size: 10px; }
+                        .bank-info { background: #fff5f5; padding: 0px; padding: 5px; border-radius: 10px; margin: 5px 0; font-size: 10px; }
+                        .creation-info { font-size: 10px; color: #666; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 5px; }
+                        .footer { text-align: center; margin-top: 10px; color: #7f8c8d; font-size: 14px; padding: 15px; border-top: 2px solid #ddd; }
+                        .print-btn { position: fixed; top: 20px; right: 20px; padding: 15px 30px; background: #85BFCD; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+                        .print-btn:hover { background: #2980b9; }
                         @media print {
-                            .print-btn {
-                                display: none;
-                            }
-                            body { 
-                                background: white; 
-                                margin: 0;
-                                padding: 0;
-                            }
-                            .page-break {
-                                page-break-before: always;
-                            }
-                            .first-page {
-                                min-height: 95vh;
-                            }
+                            .print-btn { display: none; }
+                            body { background: white; margin: 0; padding: 0; }
+                            .page-break { page-break-before: always; }
+                            .first-page { min-height: 95vh; }
                         }
                     </style>
                 </head>
@@ -1522,7 +1410,7 @@
             showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success');
         }
 
-        // Dashboard functions
+        // Dashboard functions (mantidas iguais)
         function updateDashboard() {
             const totalBudgets = Object.keys(budgets).length;
             const totalValue = Object.values(budgets).reduce((sum, budget) => sum + budget.valor_final, 0);
@@ -1660,6 +1548,11 @@
         function showLoginInterface() {
             document.getElementById('mainInterface').classList.add('hidden');
             document.getElementById('loginSection').classList.add('active');
+        }
+
+        // Carregar usuários (para histórico)
+        async function loadUsers() {
+            users = await loadFromFirebase('usuarios') || {};
         }
     </script>
 </body>
