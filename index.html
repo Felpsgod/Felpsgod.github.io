@@ -189,6 +189,15 @@
             background: #e67e22;
         }
 
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -349,6 +358,63 @@
             margin-top: 20px;
         }
 
+        .time-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .time-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .filters-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ecf0f1;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -393,6 +459,14 @@
             .chart-row {
                 grid-template-columns: 1fr;
             }
+
+            .filters-row {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -413,7 +487,7 @@
             <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
             <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
             <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
-            <button class="nav-tab" onclick="showSection('sales')">Vendas</button>
+            <button class="nav-tab" onclick="showSection('sales')">Consultas</button>
         </div>
 
         <!-- Dashboard Section -->
@@ -429,11 +503,11 @@
                     <div class="value" id="totalValue">R$ 0,00</div>
                 </div>
                 <div class="summary-item">
-                    <h4>Total de Vendas</h4>
+                    <h4>Total de Consultas</h4>
                     <div class="value" id="totalSales">0</div>
                 </div>
                 <div class="summary-item">
-                    <h4>Valor Total Vendas</h4>
+                    <h4>Valor Total Consultas</h4>
                     <div class="value" id="totalSalesValue">R$ 0,00</div>
                 </div>
                 <div class="summary-item">
@@ -475,7 +549,7 @@
 
             <div class="chart-row">
                 <div class="chart-container">
-                    <h3>Vendas por Mês</h3>
+                    <h3>Consultas por Mês</h3>
                     <canvas id="salesChart" width="400" height="200"></canvas>
                 </div>
                 <div class="chart-container">
@@ -634,10 +708,10 @@
 
         <!-- Sales Section -->
         <div id="sales" class="content-section">
-            <h2>Vendas</h2>
+            <h2>Consultas</h2>
             
             <div class="card">
-                <h3>Nova Venda</h3>
+                <h3>Nova Consulta</h3>
                 <form id="saleForm">
                     <div class="row">
                         <div class="col">
@@ -666,21 +740,6 @@
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
-                                <label for="saleMaterialCost">Custo Material (R$)</label>
-                                <input type="number" id="saleMaterialCost" step="0.01" value="0">
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="saleMedicationCost">Custo Medicamento (R$)</label>
-                                <input type="number" id="saleMedicationCost" step="0.01" value="0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col">
-                            <div class="form-group">
                                 <label for="saleProcedureCost">Custo Procedimento (R$)</label>
                                 <input type="number" id="saleProcedureCost" step="0.01" value="0">
                             </div>
@@ -693,24 +752,69 @@
                         </div>
                     </div>
 
+                    <!-- LINHA MODIFICADA: Adicionando campos de hora de entrada e saída -->
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
-                                <label for="saleDate">Data da Venda</label>
+                                <label for="saleDate">Data da Consulta <span class="required">*</span></label>
                                 <input type="date" id="saleDate" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="entryTime">Hora de Entrada <span class="required">*</span></label>
+                                <input type="time" id="entryTime" class="time-input" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="exitTime">Hora de Saída</label>
+                                <input type="time" id="exitTime" class="time-input">
                             </div>
                         </div>
                     </div>
 
                     <div class="button-container">
-                        <button type="submit" class="btn btn-success">Registrar Venda</button>
+                        <button type="submit" class="btn btn-success">Registrar Consulta</button>
                         <div id="saleAlert"></div>
                     </div>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Vendas Registradas</h3>
+                <h3>Consultas Registradas</h3>
+                
+                <!-- Filtros -->
+                <div class="filters-container">
+                    <h4>Filtros</h4>
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label for="filterDate">Data</label>
+                            <input type="date" id="filterDate">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterEntryTime">Hora de Entrada</label>
+                            <input type="time" id="filterEntryTime">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterOrigin">Origem</label>
+                            <select id="filterOrigin">
+                                <option value="">Todas</option>
+                                <option value="manual">Manual</option>
+                                <option value="orcamento">Orçamento</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterDoctor">Médico</label>
+                            <input type="text" id="filterDoctor" placeholder="Digite o nome do médico">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-info" onclick="applyFilters()">Aplicar Filtros</button>
+                        <button class="btn btn-warning" onclick="clearFilters()">Limpar Filtros</button>
+                    </div>
+                </div>
+
                 <div id="salesTable"></div>
             </div>
         </div>
@@ -724,6 +828,12 @@
         let budgets = {};
         let sales = {};
         let currentBudget = null;
+        let currentFilters = {
+            date: '',
+            entryTime: '',
+            origin: '',
+            doctor: ''
+        };
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
@@ -738,8 +848,11 @@
             document.getElementById('saleForm').addEventListener('submit', saveSale);
             document.getElementById('selectedProcedure').addEventListener('change', updateBudgetSummary);
             
-            // Set current date for sale form
-            document.getElementById('saleDate').valueAsDate = new Date();
+            // Set current date and time for sale form
+            const now = new Date();
+            document.getElementById('saleDate').valueAsDate = now;
+            document.getElementById('entryTime').value = now.toTimeString().slice(0, 5); // Formato HH:mm
+            // Hora de saída fica em branco por padrão
         });
 
         // Navigation functions
@@ -1034,7 +1147,7 @@
         }
 
         async function approveBudget(budgetId) {
-            if (confirm('Tem certeza que deseja aprovar este orçamento? Isso irá criar uma venda.')) {
+            if (confirm('Tem certeza que deseja aprovar este orçamento? Isso irá criar uma consulta.')) {
                 const budget = budgets[budgetId];
                 budget.status = 'aprovado';
                 
@@ -1050,6 +1163,8 @@
                     desconto: budget.desconto,
                     valor_final: budget.valor_final,
                     data: new Date().toISOString().split('T')[0],
+                    hora_entrada: new Date().toTimeString().slice(0, 5), // Adiciona hora de entrada atual
+                    hora_saida: '', // Hora de saída fica em branco
                     origem: 'orcamento'
                 };
                 
@@ -1057,14 +1172,13 @@
                 await saveToFirebase('orcamentos', budgets);
                 await saveToFirebase('vendas', sales);
                 
-                showAlert('Orçamento aprovado e venda criada com sucesso!', 'success', 'budgetAlert');
+                showAlert('Orçamento aprovado e consulta criada com sucesso!', 'success', 'budgetAlert');
                 displayBudgets();
                 displaySales();
                 updateDashboard();
             }
         }
 
-        // NOVA FUNÇÃO: Reprovar orçamento
         async function rejectBudget(budgetId) {
             if (confirm('Tem certeza que deseja reprovar este orçamento?')) {
                 const budget = budgets[budgetId];
@@ -1096,13 +1210,40 @@
                 paciente: document.getElementById('salePatientName').value,
                 medico: document.getElementById('saleDoctorName').value,
                 procedimento: document.getElementById('saleProcedureName').value,
-                total_material: parseFloat(document.getElementById('saleMaterialCost').value) || 0,
-                total_medicamento: parseFloat(document.getElementById('saleMedicationCost').value) || 0,
+                total_material: 0, // Campo não existe no formulário atual
+                total_medicamento: 0, // Campo não existe no formulário atual
                 total_procedimento: parseFloat(document.getElementById('saleProcedureCost').value) || 0,
                 desconto: parseFloat(document.getElementById('saleDiscount').value) || 0,
                 data: document.getElementById('saleDate').value,
+                hora_entrada: document.getElementById('entryTime').value,
+                hora_saida: document.getElementById('exitTime').value,
                 origem: 'manual'
             };
+            
+            // Validação dos campos obrigatórios
+            if (!saleData.paciente.trim()) {
+                showAlert('Por favor, preencha o campo "Nome do Paciente"', 'error', 'saleAlert');
+                document.getElementById('salePatientName').focus();
+                return;
+            }
+            
+            if (!saleData.medico.trim()) {
+                showAlert('Por favor, preencha o campo "Médico Responsável"', 'error', 'saleAlert');
+                document.getElementById('saleDoctorName').focus();
+                return;
+            }
+            
+            if (!saleData.procedimento.trim()) {
+                showAlert('Por favor, preencha o campo "Nome do Procedimento"', 'error', 'saleAlert');
+                document.getElementById('saleProcedureName').focus();
+                return;
+            }
+            
+            if (!saleData.hora_entrada) {
+                showAlert('Por favor, preencha o campo "Hora de Entrada"', 'error', 'saleAlert');
+                document.getElementById('entryTime').focus();
+                return;
+            }
             
             // Calculate final value
             saleData.valor_final = saleData.total_material + saleData.total_medicamento + saleData.total_procedimento - saleData.desconto;
@@ -1112,9 +1253,15 @@
             
             await saveToFirebase('vendas', sales);
             
-            showAlert('Venda registrada com sucesso!', 'success', 'saleAlert');
+            showAlert('Consulta registrada com sucesso!', 'success', 'saleAlert');
             document.getElementById('saleForm').reset();
-            document.getElementById('saleDate').valueAsDate = new Date();
+            
+            // Set current date and time
+            const now = new Date();
+            document.getElementById('saleDate').valueAsDate = now;
+            document.getElementById('entryTime').value = now.toTimeString().slice(0, 5);
+            // Hora de saída fica em branco por padrão
+            
             displaySales();
             updateDashboard();
         }
@@ -1126,9 +1273,10 @@
 
         function displaySales() {
             const container = document.getElementById('salesTable');
+            const filteredSales = filterSales();
             
-            if (Object.keys(sales).length === 0) {
-                container.innerHTML = '<p>Nenhuma venda registrada.</p>';
+            if (Object.keys(filteredSales).length === 0) {
+                container.innerHTML = '<p>Nenhuma consulta registrada.</p>';
                 return;
             }
             
@@ -1137,6 +1285,8 @@
                     <thead>
                         <tr>
                             <th>Data</th>
+                            <th>Entrada</th>
+                            <th>Saída</th>
                             <th>Paciente</th>
                             <th>Médico</th>
                             <th>Procedimento</th>
@@ -1148,10 +1298,12 @@
                     <tbody>
             `;
             
-            Object.entries(sales).forEach(([id, sale]) => {
+            Object.entries(filteredSales).forEach(([id, sale]) => {
                 html += `
                     <tr>
                         <td>${new Date(sale.data).toLocaleDateString('pt-BR')}</td>
+                        <td>${sale.hora_entrada || 'N/A'}</td>
+                        <td>${sale.hora_saida || 'N/A'}</td>
                         <td>${sale.paciente}</td>
                         <td>${sale.medico}</td>
                         <td>${sale.procedimento}</td>
@@ -1168,13 +1320,69 @@
             container.innerHTML = html;
         }
 
+        // Funções de Filtro
+        function applyFilters() {
+            currentFilters = {
+                date: document.getElementById('filterDate').value,
+                entryTime: document.getElementById('filterEntryTime').value,
+                origin: document.getElementById('filterOrigin').value,
+                doctor: document.getElementById('filterDoctor').value.toLowerCase()
+            };
+            displaySales();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterDate').value = '';
+            document.getElementById('filterEntryTime').value = '';
+            document.getElementById('filterOrigin').value = '';
+            document.getElementById('filterDoctor').value = '';
+            currentFilters = {
+                date: '',
+                entryTime: '',
+                origin: '',
+                doctor: ''
+            };
+            displaySales();
+        }
+
+        function filterSales() {
+            return Object.fromEntries(
+                Object.entries(sales).filter(([id, sale]) => {
+                    // Filtro por data
+                    if (currentFilters.date && sale.data !== currentFilters.date) {
+                        return false;
+                    }
+                    
+                    // Filtro por hora de entrada
+                    if (currentFilters.entryTime && sale.hora_entrada !== currentFilters.entryTime) {
+                        return false;
+                    }
+                    
+                    // Filtro por origem
+                    if (currentFilters.origin) {
+                        const origemText = sale.origem === 'manual' ? 'manual' : 'orcamento';
+                        if (origemText !== currentFilters.origin) {
+                            return false;
+                        }
+                    }
+                    
+                    // Filtro por médico
+                    if (currentFilters.doctor && !sale.medico.toLowerCase().includes(currentFilters.doctor)) {
+                        return false;
+                    }
+                    
+                    return true;
+                })
+            );
+        }
+
         async function deleteSale(saleId) {
-            if (confirm('Tem certeza que deseja excluir esta venda?')) {
+            if (confirm('Tem certeza que deseja excluir esta consulta?')) {
                 delete sales[saleId];
                 await saveToFirebase('vendas', sales);
                 displaySales();
                 updateDashboard();
-                showAlert('Venda excluída com sucesso!', 'success', 'saleAlert');
+                showAlert('Consulta excluída com sucesso!', 'success', 'saleAlert');
             }
         }
 
@@ -1267,7 +1475,6 @@
             });
         }
 
-        // NOVO GRÁFICO: Status dos Orçamentos
         function updateBudgetStatusChart() {
             const canvas = document.getElementById('budgetStatusChart');
             if (!canvas) return;
@@ -1339,7 +1546,6 @@
             ctx.fillText(`Pendentes: ${pending}`, 10, 60);
         }
 
-        // NOVO GRÁFICO: Vendas por Mês
         function updateSalesChart() {
             const canvas = document.getElementById('salesChart');
             if (!canvas) return;
@@ -1461,7 +1667,7 @@
             }
         }
 
-        // PDF Generation - VERSÃO COM IMAGENS ORIGINAIS CORRIGIDA
+        // PDF Generation
         function generatePDF() {
             if (!currentBudget) {
                 showAlert('Nenhum orçamento para gerar PDF', 'error', 'budgetAlert');
