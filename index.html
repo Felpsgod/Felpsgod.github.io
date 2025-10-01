@@ -415,6 +415,45 @@
             margin-top: 10px;
         }
 
+        /* Novos estilos para as opções de desconto */
+        .discount-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .discount-option {
+            padding: 10px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            flex: 1;
+            text-align: center;
+        }
+
+        .discount-option.selected {
+            border-color: #3498db;
+            background: #3498db;
+            color: white;
+        }
+
+        .discount-option:hover:not(.selected) {
+            border-color: #3498db;
+        }
+
+        .final-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -466,6 +505,10 @@
 
             .filter-group {
                 min-width: 100%;
+            }
+
+            .discount-options {
+                flex-direction: column;
             }
         }
     </style>
@@ -708,7 +751,7 @@
 
         <!-- Sales Section -->
         <div id="sales" class="content-section">
-            <h2>Consultas</h2>
+            <h2>Consultas Médicas</h2>
             
             <div class="card">
                 <h3>Nova Consulta</h3>
@@ -741,13 +784,39 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="saleProcedureCost">Custo Procedimento (R$)</label>
-                                <input type="number" id="saleProcedureCost" step="0.01" value="0">
+                                <input type="number" id="saleProcedureCost" step="0.01" value="0" oninput="calculateTotalWithDiscount()">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- NOVA SEÇÃO: Opções de Desconto -->
+                    <div class="row">
                         <div class="col">
                             <div class="form-group">
-                                <label for="saleDiscount">Desconto (R$)</label>
-                                <input type="number" id="saleDiscount" step="0.01" value="0">
+                                <label>Acréscimo</label>
+                                <div class="discount-options">
+                                    <div class="discount-option" data-percentage="0" onclick="selectDiscountOption(this, 0)">
+                                        Nenhum
+                                    </div>
+                                    <div class="discount-option" data-percentage="1.2" onclick="selectDiscountOption(this, 1.2)">
+                                        Débito: 1,2%
+                                    </div>
+                                    <div class="discount-option" data-percentage="3.3" onclick="selectDiscountOption(this, 3.3)">
+                                        Crédito: 3,3%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VALOR TOTAL CALCULADO -->
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label>Valor Total</label>
+                                <div class="final-value" id="totalWithDiscount">
+                                    R$ 0,00
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -835,6 +904,10 @@
             doctor: ''
         };
 
+        // Variáveis para controle do desconto
+        let selectedDiscountPercentage = 0;
+        let currentProcedureCost = 0;
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             loadProcedures();
@@ -853,7 +926,54 @@
             document.getElementById('saleDate').valueAsDate = now;
             document.getElementById('entryTime').value = now.toTimeString().slice(0, 5); // Formato HH:mm
             // Hora de saída fica em branco por padrão
+
+            // Selecionar "Nenhum" como opção padrão de desconto
+            selectDiscountOption(document.querySelector('[data-percentage="0"]'), 0);
         });
+
+        // Funções para controle do desconto
+        function selectDiscountOption(element, percentage) {
+            // Remover a classe 'selected' de todas as opções
+            document.querySelectorAll('.discount-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Adicionar a classe 'selected' à opção clicada
+            element.classList.add('selected');
+            
+            // Atualizar a porcentagem selecionada
+            selectedDiscountPercentage = percentage;
+            
+            // Recalcular o total
+            calculateTotalWithDiscount();
+        }
+
+        function calculateTotalWithDiscount() {
+            const procedureCostInput = document.getElementById('saleProcedureCost');
+            const totalWithDiscountElement = document.getElementById('totalWithDiscount');
+            
+            // Obter o valor do custo do procedimento
+            currentProcedureCost = parseFloat(procedureCostInput.value) || 0;
+            
+            // Calcular o desconto
+            const discountAmount = currentProcedureCost * (selectedDiscountPercentage / 100);
+            
+            // Calcular o valor total com desconto
+            const totalWithDiscount = currentProcedureCost + discountAmount;
+            
+            // Atualizar o display
+            totalWithDiscountElement.textContent = `R$ ${totalWithDiscount.toFixed(2)}`;
+            
+            // Adicionar informações sobre o desconto aplicado
+            if (selectedDiscountPercentage > 0) {
+                totalWithDiscountElement.innerHTML = `
+                    R$ ${totalWithDiscount.toFixed(2)}<br>
+                    <small style="font-size: 12px; color: #666;">
+                        (Custo: R$ ${currentProcedureCost.toFixed(2)} + ${selectedDiscountPercentage}%: R$ ${discountAmount.toFixed(2)})
+                    </small>
+                `;
+            }
+        }
 
         // Navigation functions
         function showSection(sectionId) {
@@ -1202,9 +1322,13 @@
             }
         }
 
-        // Sales functions
+        // Sales functions - MODIFICADA para incluir o desconto por porcentagem
         async function saveSale(event) {
             event.preventDefault();
+            
+            const procedureCostInput = parseFloat(document.getElementById('saleProcedureCost').value) || 0;
+            const discountAmount = procedureCostInput * (selectedDiscountPercentage / 100);
+            const totalWithDiscount = procedureCostInput + discountAmount;
             
             const saleData = {
                 paciente: document.getElementById('salePatientName').value,
@@ -1212,12 +1336,14 @@
                 procedimento: document.getElementById('saleProcedureName').value,
                 total_material: 0, // Campo não existe no formulário atual
                 total_medicamento: 0, // Campo não existe no formulário atual
-                total_procedimento: parseFloat(document.getElementById('saleProcedureCost').value) || 0,
-                desconto: parseFloat(document.getElementById('saleDiscount').value) || 0,
+                total_procedimento: procedureCostInput,
+                desconto: discountAmount,
+                desconto_percentual: selectedDiscountPercentage,
                 data: document.getElementById('saleDate').value,
                 hora_entrada: document.getElementById('entryTime').value,
                 hora_saida: document.getElementById('exitTime').value,
-                origem: 'manual'
+                origem: 'manual',
+                valor_final: totalWithDiscount
             };
             
             // Validação dos campos obrigatórios
@@ -1245,9 +1371,6 @@
                 return;
             }
             
-            // Calculate final value
-            saleData.valor_final = saleData.total_material + saleData.total_medicamento + saleData.total_procedimento - saleData.desconto;
-            
             const saleId = 'venda_' + Date.now();
             sales[saleId] = saleData;
             
@@ -1261,6 +1384,10 @@
             document.getElementById('saleDate').valueAsDate = now;
             document.getElementById('entryTime').value = now.toTimeString().slice(0, 5);
             // Hora de saída fica em branco por padrão
+            
+            // Resetar opções de desconto
+            selectDiscountOption(document.querySelector('[data-percentage="0"]'), 0);
+            document.getElementById('totalWithDiscount').textContent = 'R$ 0,00';
             
             displaySales();
             updateDashboard();
@@ -1291,6 +1418,7 @@
                             <th>Médico</th>
                             <th>Procedimento</th>
                             <th>Valor Final</th>
+                            <th>Desconto</th>
                             <th>Origem</th>
                             <th>Ações</th>
                         </tr>
@@ -1299,6 +1427,10 @@
             `;
             
             Object.entries(filteredSales).forEach(([id, sale]) => {
+                const descontoInfo = sale.desconto_percentual ? 
+                    `${sale.desconto_percentual}% (R$ ${sale.desconto.toFixed(2)})` : 
+                    `R$ ${sale.desconto.toFixed(2)}`;
+                
                 html += `
                     <tr>
                         <td>${new Date(sale.data).toLocaleDateString('pt-BR')}</td>
@@ -1308,6 +1440,7 @@
                         <td>${sale.medico}</td>
                         <td>${sale.procedimento}</td>
                         <td>R$ ${sale.valor_final.toFixed(2)}</td>
+                        <td>${descontoInfo}</td>
                         <td>${sale.origem === 'manual' ? 'Manual' : 'Orçamento'}</td>
                         <td>
                             <button class="btn btn-danger" onclick="deleteSale('${id}')">Excluir</button>
