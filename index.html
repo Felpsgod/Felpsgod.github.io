@@ -959,7 +959,7 @@
             const discountAmount = currentProcedureCost * (selectedDiscountPercentage / 100);
             
             // Calcular o valor total com desconto
-            const totalWithDiscount = currentProcedureCost + discountAmount;
+            const totalWithDiscount = currentProcedureCost - discountAmount;
             
             // Atualizar o display
             totalWithDiscountElement.textContent = `R$ ${totalWithDiscount.toFixed(2)}`;
@@ -969,7 +969,7 @@
                 totalWithDiscountElement.innerHTML = `
                     R$ ${totalWithDiscount.toFixed(2)}<br>
                     <small style="font-size: 12px; color: #666;">
-                        (Custo: R$ ${currentProcedureCost.toFixed(2)} + ${selectedDiscountPercentage}%: R$ ${discountAmount.toFixed(2)})
+                        (Custo: R$ ${currentProcedureCost.toFixed(2)} - ${selectedDiscountPercentage}%: R$ ${discountAmount.toFixed(2)})
                     </small>
                 `;
             }
