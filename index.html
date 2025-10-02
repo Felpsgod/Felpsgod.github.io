@@ -500,7 +500,7 @@
         }
 
         .calendar .holiday {
-            background: #ffe6e6;
+            background: #ffebee;
         }
 
         .calendar .doctor-name {
@@ -524,10 +524,11 @@
             min-width: 60px;
         }
 
-        /* ALTERAÇÃO 2: Mudança das cores para verde (#008000) */
+        /* ALTERAÇÃO 2: Cores diferentes para M, T e M-T */
         .shift-select.M { background: #d4f8d4; }
-        .shift-select.T { background: #a8f0a8; }
-        .shift-select.M-T { background: #008000; color: white; }
+        .shift-select.T { background: #f8f4d4; }
+        .shift-select.M-T { background: #d4e8f8; }
+        .shift-select.holiday { background: #ffebee; }
 
         .legend {
             display: flex;
@@ -549,12 +550,12 @@
             border: 1px solid #ddd;
         }
 
-        /* ALTERAÇÃO 2: Mudança das cores para verde (#008000) */
+        /* ALTERAÇÃO 2: Cores diferentes para M, T e M-T */
         .legend-color.M { background: #d4f8d4; }
-        .legend-color.T { background: #a8f0a8; }
-        .legend-color.M-T { background: #008000; }
+        .legend-color.T { background: #f8f4d4; }
+        .legend-color.M-T { background: #d4e8f8; }
         .legend-color.weekend { background: #fff0f0; }
-        .legend-color.holiday { background: #ffe6e6; }
+        .legend-color.holiday { background: #ffebee; }
 
         .doctors-summary {
             margin-top: 30px;
@@ -575,6 +576,32 @@
         .doctors-summary th {
             background: #f8f9fa;
             font-weight: bold;
+        }
+
+        .budget-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .budget-tab {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+
+        .budget-tab.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .budget-tab:hover:not(.active) {
+            background: #e9ecef;
         }
 
         @media (max-width: 768px) {
@@ -647,6 +674,16 @@
                 min-width: 50px;
                 font-size: 11px;
             }
+
+            .budget-tabs {
+                flex-direction: column;
+            }
+
+            .budget-tab {
+                margin-right: 0;
+                margin-bottom: 5px;
+                border-radius: 5px;
+            }
         }
     </style>
 </head>
@@ -683,6 +720,30 @@
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
             <h2>Dashboard</h2>
+            
+            <!-- Filtros do Dashboard -->
+            <div class="filters-container">
+                <h4>Filtros do Dashboard</h4>
+                <div class="filters-row">
+                    <div class="filter-group">
+                        <label for="dashboardStartDate">Data Início</label>
+                        <input type="date" id="dashboardStartDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dashboardEndDate">Data Fim</label>
+                        <input type="date" id="dashboardEndDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dashboardMonth">Mês</label>
+                        <input type="month" id="dashboardMonth">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-info" onclick="applyDashboardFilters()">Aplicar Filtros</button>
+                    <button class="btn btn-warning" onclick="clearDashboardFilters()">Limpar Filtros</button>
+                </div>
+            </div>
+
             <div class="summary-grid">
                 <div class="summary-item">
                     <h4>Total de Orçamentos</h4>
@@ -816,6 +877,7 @@
             <div class="card">
                 <h3>Novo Médico</h3>
                 <form id="doctorForm">
+                    <input type="hidden" id="editingDoctorId" value="">
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
@@ -857,7 +919,8 @@
                         </div>
                     </div>
                     <div class="button-container">
-                        <button type="submit" class="btn btn-primary">Salvar Médico</button>
+                        <button type="submit" class="btn btn-primary" id="doctorSubmitBtn">Salvar Médico</button>
+                        <button type="button" class="btn btn-warning" id="doctorCancelBtn" style="display: none;" onclick="cancelEditDoctor()">Cancelar Edição</button>
                         <div id="doctorAlert"></div>
                     </div>
                 </form>
@@ -958,6 +1021,14 @@
         <!-- Budgets List Section -->
         <div id="budgets" class="content-section">
             <h2>Orçamentos Gerados</h2>
+            
+            <div class="budget-tabs">
+                <button class="budget-tab active" onclick="showBudgetTab('all')">Todos</button>
+                <button class="budget-tab" onclick="showBudgetTab('approved')">Aprovados</button>
+                <button class="budget-tab" onclick="showBudgetTab('rejected')">Reprovados</button>
+                <button class="budget-tab" onclick="showBudgetTab('pending')">Pendentes</button>
+            </div>
+            
             <div id="budgetsTable"></div>
         </div>
 
@@ -1187,16 +1258,34 @@
             doctor: ''
         };
 
-        // Lista de feriados (exemplo - pode ser expandida)
+        let dashboardFilters = {
+            startDate: '',
+            endDate: '',
+            month: ''
+        };
+
+        let currentBudgetTab = 'all';
+
+        // Lista de feriados nacionais e de Curitiba para 2024
         const feriados = [
-            '2024-01-01', // Ano Novo
-            '2024-04-21', // Tiradentes
-            '2024-05-01', // Dia do Trabalho
-            '2024-09-07', // Independência
-            '2024-10-12', // Nossa Senhora
-            '2024-11-02', // Finados
-            '2024-11-15', // Proclamação da República
-            '2024-12-25'  // Natal
+            '2025-01-01', // Ano Novo
+            '2025-02-12', // Carnaval
+            '2025-02-13', // Carnaval
+            '2025-03-29', // Sexta-feira Santa
+            '2025-04-21', // Tiradentes
+            '2025-05-01', // Dia do Trabalho
+            '2025-05-30', // Corpus Christi
+            '2025-09-07', // Independência do Brasil
+            '2025-10-12', // Nossa Senhora Aparecida
+            '2025-11-02', // Finados
+            '2025-11-15', // Proclamação da República
+            '2025-12-25', // Natal
+            '2025-12-31', // Véspera de Ano Novo (meio expediente)
+            // Feriados de Curitiba
+            '2025-03-08', // Aniversário de Curitiba
+            '2025-06-24', // Dia de São João
+            '2025-11-20', // Dia da Consciência Negra
+            '2025-12-08'  // Dia de Nossa Senhora da Luz dos Pinhais
         ];
 
         // Variáveis para controle do desconto
@@ -1253,6 +1342,7 @@
             
             currentProcedureCost = parseFloat(procedureCostInput.value) || 0;
             const discountAmount = currentProcedureCost * (selectedDiscountPercentage / 100);
+            // CORREÇÃO: Subtrair o desconto em vez de somar
             const totalWithDiscount = currentProcedureCost - discountAmount;
             
             totalWithDiscountElement.textContent = `R$ ${totalWithDiscount.toFixed(2)}`;
@@ -1337,13 +1427,28 @@
                 plantao: document.getElementById('doctorShift').value // ALTERAÇÃO 3: Adicionar campo plantão
             };
             
-            const doctorId = 'medico_' + Date.now();
+            const editingId = document.getElementById('editingDoctorId').value;
+            let doctorId;
+            
+            if (editingId) {
+                // Editando médico existente
+                doctorId = editingId;
+                showAlert('Médico atualizado com sucesso!', 'success', 'doctorAlert');
+            } else {
+                // Criando novo médico
+                doctorId = 'medico_' + Date.now();
+                showAlert('Médico salvo com sucesso!', 'success', 'doctorAlert');
+            }
+            
             doctors[doctorId] = doctorData;
             
             await saveToFirebase('medicos', doctors);
             
-            showAlert('Médico salvo com sucesso!', 'success', 'doctorAlert');
             document.getElementById('doctorForm').reset();
+            document.getElementById('editingDoctorId').value = '';
+            document.getElementById('doctorSubmitBtn').textContent = 'Salvar Médico';
+            document.getElementById('doctorCancelBtn').style.display = 'none';
+            
             displayDoctors();
             loadDoctorOptions('saleDoctorName');
             loadDoctorOptions('filterDoctor');
@@ -1388,6 +1493,7 @@
                         <td>${doctor.telefone || 'N/A'}</td>
                         <td>${doctor.plantao === 'sim' ? 'Sim' : 'Não'}</td>
                         <td>
+                            <button class="btn btn-info" onclick="editDoctor('${id}')">Editar</button>
                             <button class="btn btn-danger" onclick="deleteDoctor('${id}')">Excluir</button>
                         </td>
                     </tr>
@@ -1396,6 +1502,31 @@
             
             html += '</tbody></table>';
             container.innerHTML = html;
+        }
+
+        function editDoctor(doctorId) {
+            const doctor = doctors[doctorId];
+            
+            document.getElementById('doctorName').value = doctor.nome;
+            document.getElementById('doctorSpecialty').value = doctor.especialidade;
+            document.getElementById('doctorCRM').value = doctor.crm;
+            document.getElementById('doctorPhone').value = doctor.telefone || '';
+            document.getElementById('doctorShift').value = doctor.plantao;
+            
+            document.getElementById('editingDoctorId').value = doctorId;
+            document.getElementById('doctorSubmitBtn').textContent = 'Atualizar Médico';
+            document.getElementById('doctorCancelBtn').style.display = 'inline-block';
+            
+            // Scroll para o formulário
+            document.getElementById('doctorForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEditDoctor() {
+            document.getElementById('doctorForm').reset();
+            document.getElementById('editingDoctorId').value = '';
+            document.getElementById('doctorSubmitBtn').textContent = 'Salvar Médico';
+            document.getElementById('doctorCancelBtn').style.display = 'none';
+            showAlert('Edição cancelada', 'success', 'doctorAlert');
         }
 
         function loadDoctorOptions(selectId) {
@@ -1608,11 +1739,56 @@
             displayBudgets();
         }
 
+        function showBudgetTab(tab) {
+            currentBudgetTab = tab;
+            
+            // Atualizar tabs ativas
+            document.querySelectorAll('.budget-tab').forEach(tabElement => {
+                tabElement.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayBudgets();
+        }
+
         function displayBudgets() {
             const container = document.getElementById('budgetsTable');
             
             if (Object.keys(budgets).length === 0) {
                 container.innerHTML = '<p>Nenhum orçamento gerado.</p>';
+                return;
+            }
+            
+            // Filtrar orçamentos conforme a tab selecionada
+            let filteredBudgets = {};
+            
+            if (currentBudgetTab === 'all') {
+                filteredBudgets = budgets;
+            } else if (currentBudgetTab === 'approved') {
+                Object.entries(budgets).forEach(([id, budget]) => {
+                    const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
+                    if (status === 'aprovado') {
+                        filteredBudgets[id] = budget;
+                    }
+                });
+            } else if (currentBudgetTab === 'rejected') {
+                Object.entries(budgets).forEach(([id, budget]) => {
+                    const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
+                    if (status === 'reprovado') {
+                        filteredBudgets[id] = budget;
+                    }
+                });
+            } else if (currentBudgetTab === 'pending') {
+                Object.entries(budgets).forEach(([id, budget]) => {
+                    const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
+                    if (!status || status === 'pendente') {
+                        filteredBudgets[id] = budget;
+                    }
+                });
+            }
+            
+            if (Object.keys(filteredBudgets).length === 0) {
+                container.innerHTML = `<p>Nenhum orçamento ${getBudgetTabLabel(currentBudgetTab)}.</p>`;
                 return;
             }
             
@@ -1633,7 +1809,7 @@
                     <tbody>
             `;
             
-            Object.entries(budgets).forEach(([id, budget]) => {
+            Object.entries(filteredBudgets).forEach(([id, budget]) => {
                 const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
                 const rowClass = status === 'aprovado' ? 'approved' : status === 'reprovado' ? 'rejected' : '';
                 const statusText = status === 'aprovado' ? 'Aprovado' : status === 'reprovado' ? 'Reprovado' : 'Pendente';
@@ -1662,6 +1838,16 @@
             
             html += '</tbody></table>';
             container.innerHTML = html;
+        }
+
+        function getBudgetTabLabel(tab) {
+            switch(tab) {
+                case 'all': return '';
+                case 'approved': return 'aprovado';
+                case 'rejected': return 'reprovado';
+                case 'pending': return 'pendente';
+                default: return '';
+            }
         }
 
         async function approveBudget(budgetId) {
@@ -1718,13 +1904,18 @@
             }
         }
 
-        // Sales functions
+        // Sales functions - CORREÇÃO COMPLETA
         async function saveSale(event) {
             event.preventDefault();
             
             const procedureCostInput = parseFloat(document.getElementById('saleProcedureCost').value) || 0;
             const discountAmount = procedureCostInput * (selectedDiscountPercentage / 100);
-            const totalWithDiscount = procedureCostInput + discountAmount;
+            
+            // CORREÇÃO: Subtrair o desconto em vez de somar
+            const totalWithDiscount = procedureCostInput - discountAmount;
+            
+            // CORREÇÃO: Usar a data informada no formulário diretamente
+            const saleDate = document.getElementById('saleDate').value;
             
             const saleData = {
                 paciente: document.getElementById('salePatientName').value,
@@ -1735,7 +1926,8 @@
                 total_procedimento: procedureCostInput,
                 desconto: discountAmount,
                 desconto_percentual: selectedDiscountPercentage,
-                data: document.getElementById('saleDate').value,
+                // CORREÇÃO: Usar a data informada no formulário sem conversões
+                data: saleDate,
                 hora_entrada: document.getElementById('entryTime').value,
                 hora_saida: document.getElementById('exitTime').value,
                 origem: 'manual',
@@ -1825,7 +2017,8 @@
                 
                 html += `
                     <tr>
-                        <td>${new Date(sale.data).toLocaleDateString('pt-BR')}</td>
+                        <!-- CORREÇÃO: Exibir a data que foi inserida no formulário -->
+                        <td>${formatDateForDisplay(sale.data)}</td>
                         <td>${sale.hora_entrada || 'N/A'}</td>
                         <td>${sale.hora_saida || 'N/A'}</td>
                         <td>${sale.paciente}</td>
@@ -1843,6 +2036,20 @@
             
             html += '</tbody></table>';
             container.innerHTML = html;
+        }
+
+        // Função para corrigir a exibição da data
+        function formatDateForDisplay(dateString) {
+            // Se a data já está no formato correto, apenas formata
+            if (dateString.includes('/')) {
+                return dateString;
+            }
+            
+            // Se está no formato ISO, converte
+            const date = new Date(dateString);
+            // CORREÇÃO: Adiciona um dia para compensar o fuso horário
+            date.setDate(date.getDate() + 1);
+            return date.toLocaleDateString('pt-BR');
         }
 
         // Funções de Filtro
@@ -1964,15 +2171,23 @@
                     const currentShift = shifts[shiftId] || '';
                     
                     html += `<td class="${dayClass}">`;
-                    html += `<select class="shift-select ${currentShift}" 
-                                    data-date="${date}" 
-                                    data-doctor="${doctor.nome}"
-                                    onchange="saveShift(this)">
-                            <option value="">-</option>
-                            <option value="M" ${currentShift === 'M' ? 'selected' : ''}>M</option>
-                            <option value="T" ${currentShift === 'T' ? 'selected' : ''}>T</option>
-                            <option value="M-T" ${currentShift === 'M-T' ? 'selected' : ''}>M-T</option>
-                        </select>`;
+                    
+                    if (isHoliday) {
+                        // Em feriados, mostrar como desabilitado
+                        html += `<select class="shift-select holiday" disabled title="Feriado - Plantão não disponível">
+                                <option value="">Feriado</option>
+                            </select>`;
+                    } else {
+                        html += `<select class="shift-select ${currentShift}" 
+                                        data-date="${date}" 
+                                        data-doctor="${doctor.nome}"
+                                        onchange="saveShift(this)">
+                                <option value="">-</option>
+                                <option value="M" ${currentShift === 'M' ? 'selected' : ''}>M</option>
+                                <option value="T" ${currentShift === 'T' ? 'selected' : ''}>T</option>
+                                <option value="M-T" ${currentShift === 'M-T' ? 'selected' : ''}>M-T</option>
+                            </select>`;
+                    }
                     html += '</td>';
                 }
                 html += '</tr>';
@@ -2110,22 +2325,51 @@
         }
 
         // Dashboard functions
+        function applyDashboardFilters() {
+            dashboardFilters = {
+                startDate: document.getElementById('dashboardStartDate').value,
+                endDate: document.getElementById('dashboardEndDate').value,
+                month: document.getElementById('dashboardMonth').value
+            };
+            updateDashboard();
+        }
+
+        function clearDashboardFilters() {
+            document.getElementById('dashboardStartDate').value = '';
+            document.getElementById('dashboardEndDate').value = '';
+            document.getElementById('dashboardMonth').value = '';
+            dashboardFilters = {
+                startDate: '',
+                endDate: '',
+                month: ''
+            };
+            updateDashboard();
+        }
+
         function updateDashboard() {
-            const totalBudgets = Object.keys(budgets).length;
-            const totalValue = Object.values(budgets).reduce((sum, budget) => sum + budget.valor_final, 0);
+            // Aplicar filtros
+            let filteredBudgets = filterBudgetsByDate(budgets);
+            let filteredSales = filterSalesByDate(sales);
+            
+            const totalBudgets = Object.keys(filteredBudgets).length;
+            // CORREÇÃO: Somar apenas orçamentos aprovados
+            const totalValue = Object.values(filteredBudgets).reduce((sum, budget) => {
+                const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
+                return status === 'aprovado' ? sum + budget.valor_final : sum;
+            }, 0);
             const totalProcedures = Object.keys(procedures).length;
-            const totalSales = Object.keys(sales).length;
-            const totalSalesValue = Object.values(sales).reduce((sum, sale) => sum + sale.valor_final, 0);
+            const totalSales = Object.keys(filteredSales).length;
+            const totalSalesValue = Object.values(filteredSales).reduce((sum, sale) => sum + sale.valor_final, 0);
             const totalDoctors = Object.keys(doctors).length;
             
             // Calcular status dos orçamentos (compatível com versão anterior)
-            const approvedBudgets = Object.values(budgets).filter(budget => 
+            const approvedBudgets = Object.values(filteredBudgets).filter(budget => 
                 budget.status === 'aprovado' || budget.aprovado === true
             ).length;
-            const rejectedBudgets = Object.values(budgets).filter(budget => 
+            const rejectedBudgets = Object.values(filteredBudgets).filter(budget => 
                 budget.status === 'reprovado'
             ).length;
-            const pendingBudgets = Object.values(budgets).filter(budget => 
+            const pendingBudgets = Object.values(filteredBudgets).filter(budget => 
                 !budget.status && !budget.aprovado
             ).length;
             
@@ -2134,7 +2378,7 @@
             
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
-            const monthlyBudgets = Object.values(budgets).filter(budget => {
+            const monthlyBudgets = Object.values(filteredBudgets).filter(budget => {
                 const budgetDate = new Date(budget.data);
                 return budgetDate.getMonth() === currentMonth && budgetDate.getFullYear() === currentYear;
             }).length;
@@ -2162,6 +2406,60 @@
             });
             
             updateCharts();
+        }
+
+        function filterBudgetsByDate(budgetsToFilter) {
+            return Object.fromEntries(
+                Object.entries(budgetsToFilter).filter(([id, budget]) => {
+                    // Filtro por data início
+                    if (dashboardFilters.startDate && budget.data < dashboardFilters.startDate) {
+                        return false;
+                    }
+                    
+                    // Filtro por data fim
+                    if (dashboardFilters.endDate && budget.data > dashboardFilters.endDate) {
+                        return false;
+                    }
+                    
+                    // Filtro por mês
+                    if (dashboardFilters.month) {
+                        const budgetDate = new Date(budget.data);
+                        const budgetMonth = budgetDate.toISOString().slice(0, 7);
+                        if (budgetMonth !== dashboardFilters.month) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                })
+            );
+        }
+
+        function filterSalesByDate(salesToFilter) {
+            return Object.fromEntries(
+                Object.entries(salesToFilter).filter(([id, sale]) => {
+                    // Filtro por data início
+                    if (dashboardFilters.startDate && sale.data < dashboardFilters.startDate) {
+                        return false;
+                    }
+                    
+                    // Filtro por data fim
+                    if (dashboardFilters.endDate && sale.data > dashboardFilters.endDate) {
+                        return false;
+                    }
+                    
+                    // Filtro por mês
+                    if (dashboardFilters.month) {
+                        const saleDate = new Date(sale.data);
+                        const saleMonth = saleDate.toISOString().slice(0, 7);
+                        if (saleMonth !== dashboardFilters.month) {
+                            return false;
+                        }
+                    }
+                    
+                    return true;
+                })
+            );
         }
 
         function updateCharts() {
