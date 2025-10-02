@@ -75,7 +75,6 @@
             margin-bottom: 20px;
             text-align: center;
             width: 300px;
-
         }
 
         .nav-tab {
@@ -422,7 +421,6 @@
             margin-top: 10px;
         }
 
-        /* Novos estilos para as opções de desconto */
         .discount-options {
             display: flex;
             gap: 15px;
@@ -461,7 +459,6 @@
             text-align: center;
         }
 
-        /* Estilos para a agenda de plantão */
         .calendar-container {
             overflow-x: auto;
             margin-top: 20px;
@@ -524,7 +521,6 @@
             min-width: 60px;
         }
 
-        /* ALTERAÇÃO 2: Cores diferentes para M, T e M-T */
         .shift-select.M { background: #d4f8d4; }
         .shift-select.T { background: #f8f4d4; }
         .shift-select.M-T { background: #d4e8f8; }
@@ -550,7 +546,6 @@
             border: 1px solid #ddd;
         }
 
-        /* ALTERAÇÃO 2: Cores diferentes para M, T e M-T */
         .legend-color.M { background: #d4f8d4; }
         .legend-color.T { background: #f8f4d4; }
         .legend-color.M-T { background: #d4e8f8; }
@@ -688,22 +683,22 @@
     </style>
 </head>
 <body>
-            <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('doctors')">Cadastro Médico</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('sales')">Consultas</button>
-            <br>
-            <button class="nav-tab" onclick="showSection('shifts')">Plantão</button>
-            <br>
-        </div>
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showSection('dashboard')">Dashboard</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('procedures')">Procedimentos</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('doctors')">Cadastro Médico</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('budget')">Novo Orçamento</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('budgets')">Orçamentos</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('sales')">Consultas</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('shifts')">Plantão</button>
+        <br>
+    </div>
     <div class="container">
         <div class="header">
             <div class="header-logo">
@@ -714,8 +709,6 @@
                 <p>Sistema de Geração de Orçamentos Médicos</p>
             </div>
         </div>
-
-
 
         <!-- Dashboard Section -->
         <div id="dashboard" class="content-section active">
@@ -906,12 +899,21 @@
                             </div>
                         </div>
                     </div>
-                    <!-- ALTERAÇÃO 3: Adicionar campo Plantão -->
+                    <!-- Campos para Plantão e Consulta -->
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
                                 <label for="doctorShift">Plantão</label>
                                 <select id="doctorShift" required>
+                                    <option value="sim">Sim</option>
+                                    <option value="nao">Não</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="doctorConsulta">Consulta</label>
+                                <select id="doctorConsulta" required>
                                     <option value="sim">Sim</option>
                                     <option value="nao">Não</option>
                                 </select>
@@ -945,7 +947,6 @@
                         </div>
                     </div>
                     <div class="col">
-                        <!-- ALTERAÇÃO 1: Trocar select por input para digitar o nome do médico -->
                         <div class="form-group">
                             <label for="doctorName">Médico Responsável <span class="required">*</span></label>
                             <input type="text" id="doctorName" required placeholder="Digite o nome do médico">
@@ -1074,7 +1075,6 @@
                         </div>
                     </div>
 
-                    <!-- NOVA SEÇÃO: Opções de Desconto -->
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
@@ -1094,7 +1094,6 @@
                         </div>
                     </div>
 
-                    <!-- VALOR TOTAL CALCULADO -->
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
@@ -1106,7 +1105,6 @@
                         </div>
                     </div>
 
-                    <!-- LINHA MODIFICADA: Adicionando campos de hora de entrada e saída -->
                     <div class="row">
                         <div class="col">
                             <div class="form-group">
@@ -1138,7 +1136,6 @@
             <div class="card">
                 <h3>Consultas Registradas</h3>
                 
-                <!-- Filtros -->
                 <div class="filters-container">
                     <h4>Filtros</h4>
                     <div class="filters-row">
@@ -1342,7 +1339,6 @@
             
             currentProcedureCost = parseFloat(procedureCostInput.value) || 0;
             const discountAmount = currentProcedureCost * (selectedDiscountPercentage / 100);
-            // CORREÇÃO: Subtrair o desconto em vez de somar
             const totalWithDiscount = currentProcedureCost - discountAmount;
             
             totalWithDiscountElement.textContent = `R$ ${totalWithDiscount.toFixed(2)}`;
@@ -1424,18 +1420,17 @@
                 especialidade: document.getElementById('doctorSpecialty').value,
                 crm: document.getElementById('doctorCRM').value,
                 telefone: document.getElementById('doctorPhone').value,
-                plantao: document.getElementById('doctorShift').value // ALTERAÇÃO 3: Adicionar campo plantão
+                plantao: document.getElementById('doctorShift').value,
+                consulta: document.getElementById('doctorConsulta').value
             };
             
             const editingId = document.getElementById('editingDoctorId').value;
             let doctorId;
             
             if (editingId) {
-                // Editando médico existente
                 doctorId = editingId;
                 showAlert('Médico atualizado com sucesso!', 'success', 'doctorAlert');
             } else {
-                // Criando novo médico
                 doctorId = 'medico_' + Date.now();
                 showAlert('Médico salvo com sucesso!', 'success', 'doctorAlert');
             }
@@ -1478,6 +1473,7 @@
                             <th>CRM</th>
                             <th>Telefone</th>
                             <th>Plantão</th>
+                            <th>Consulta</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
@@ -1492,6 +1488,7 @@
                         <td>${doctor.crm}</td>
                         <td>${doctor.telefone || 'N/A'}</td>
                         <td>${doctor.plantao === 'sim' ? 'Sim' : 'Não'}</td>
+                        <td>${doctor.consulta === 'sim' ? 'Sim' : 'Não'}</td>
                         <td>
                             <button class="btn btn-info" onclick="editDoctor('${id}')">Editar</button>
                             <button class="btn btn-danger" onclick="deleteDoctor('${id}')">Excluir</button>
@@ -1512,12 +1509,12 @@
             document.getElementById('doctorCRM').value = doctor.crm;
             document.getElementById('doctorPhone').value = doctor.telefone || '';
             document.getElementById('doctorShift').value = doctor.plantao;
+            document.getElementById('doctorConsulta').value = doctor.consulta || 'sim';
             
             document.getElementById('editingDoctorId').value = doctorId;
             document.getElementById('doctorSubmitBtn').textContent = 'Atualizar Médico';
             document.getElementById('doctorCancelBtn').style.display = 'inline-block';
             
-            // Scroll para o formulário
             document.getElementById('doctorForm').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -1538,9 +1535,8 @@
                 '<option value="">Selecione um médico</option>';
             
             Object.entries(doctors).forEach(([id, doctor]) => {
-                // ALTERAÇÃO 3: Filtrar apenas médicos que não são de plantão para consultas
-                if (selectId === 'saleDoctorName' && doctor.plantao === 'sim') {
-                    return; // Não incluir médicos de plantão na lista de consultas
+                if (selectId === 'saleDoctorName' && doctor.consulta !== 'sim') {
+                    return;
                 }
                 
                 const option = document.createElement('option');
@@ -1549,7 +1545,6 @@
                 select.appendChild(option);
             });
             
-            // Restore previous value if it still exists
             if (currentValue) {
                 select.value = currentValue;
             }
@@ -1742,7 +1737,6 @@
         function showBudgetTab(tab) {
             currentBudgetTab = tab;
             
-            // Atualizar tabs ativas
             document.querySelectorAll('.budget-tab').forEach(tabElement => {
                 tabElement.classList.remove('active');
             });
@@ -1759,7 +1753,6 @@
                 return;
             }
             
-            // Filtrar orçamentos conforme a tab selecionada
             let filteredBudgets = {};
             
             if (currentBudgetTab === 'all') {
@@ -1904,17 +1897,14 @@
             }
         }
 
-        // Sales functions - CORREÇÃO COMPLETA
+        // Sales functions
         async function saveSale(event) {
             event.preventDefault();
             
             const procedureCostInput = parseFloat(document.getElementById('saleProcedureCost').value) || 0;
             const discountAmount = procedureCostInput * (selectedDiscountPercentage / 100);
-            
-            // CORREÇÃO: Subtrair o desconto em vez de somar
             const totalWithDiscount = procedureCostInput - discountAmount;
             
-            // CORREÇÃO: Usar a data informada no formulário diretamente
             const saleDate = document.getElementById('saleDate').value;
             
             const saleData = {
@@ -1926,7 +1916,6 @@
                 total_procedimento: procedureCostInput,
                 desconto: discountAmount,
                 desconto_percentual: selectedDiscountPercentage,
-                // CORREÇÃO: Usar a data informada no formulário sem conversões
                 data: saleDate,
                 hora_entrada: document.getElementById('entryTime').value,
                 hora_saida: document.getElementById('exitTime').value,
@@ -1982,6 +1971,27 @@
             displaySales();
         }
 
+        function formatDateForDisplay(dateString) {
+            if (dateString.includes('/')) {
+                return dateString;
+            }
+            
+            if (dateString.includes('-')) {
+                const [year, month, day] = dateString.split('-');
+                return `${day}/${month}/${year}`;
+            }
+            
+            try {
+                const date = new Date(dateString);
+                const day = String(date.getUTCDate()).padStart(2, '0');
+                const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const year = date.getUTCFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (error) {
+                return dateString;
+            }
+        }
+
         function displaySales() {
             const container = document.getElementById('salesTable');
             const filteredSales = filterSales();
@@ -2017,7 +2027,6 @@
                 
                 html += `
                     <tr>
-                        <!-- CORREÇÃO: Exibir a data que foi inserida no formulário -->
                         <td>${formatDateForDisplay(sale.data)}</td>
                         <td>${sale.hora_entrada || 'N/A'}</td>
                         <td>${sale.hora_saida || 'N/A'}</td>
@@ -2038,21 +2047,6 @@
             container.innerHTML = html;
         }
 
-        // Função para corrigir a exibição da data
-        function formatDateForDisplay(dateString) {
-            // Se a data já está no formato correto, apenas formata
-            if (dateString.includes('/')) {
-                return dateString;
-            }
-            
-            // Se está no formato ISO, converte
-            const date = new Date(dateString);
-            // CORREÇÃO: Adiciona um dia para compensar o fuso horário
-            date.setDate(date.getDate() + 1);
-            return date.toLocaleDateString('pt-BR');
-        }
-
-        // Funções de Filtro
         function applyFilters() {
             currentFilters = {
                 startDate: document.getElementById('filterStartDate').value,
@@ -2083,22 +2077,18 @@
         function filterSales() {
             return Object.fromEntries(
                 Object.entries(sales).filter(([id, sale]) => {
-                    // Filtro por data início
                     if (currentFilters.startDate && sale.data < currentFilters.startDate) {
                         return false;
                     }
                     
-                    // Filtro por data fim
                     if (currentFilters.endDate && sale.data > currentFilters.endDate) {
                         return false;
                     }
                     
-                    // Filtro por hora de entrada
                     if (currentFilters.entryTime && sale.hora_entrada !== currentFilters.entryTime) {
                         return false;
                     }
                     
-                    // Filtro por origem
                     if (currentFilters.origin) {
                         const origemText = sale.origem === 'manual' ? 'manual' : 'orcamento';
                         if (origemText !== currentFilters.origin) {
@@ -2106,7 +2096,6 @@
                         }
                     }
                     
-                    // Filtro por médico
                     if (currentFilters.doctor && sale.medico !== currentFilters.doctor) {
                         return false;
                     }
@@ -2138,7 +2127,6 @@
             const calendarDiv = document.getElementById('calendar');
             let html = '<table class="calendar"><thead><tr><th class="doctor-name">Médico/Dia</th>';
             
-            // Cabeçalho com dias do mês
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = date.getDay();
@@ -2150,9 +2138,7 @@
             }
             html += '</tr></thead><tbody>';
             
-            // Linhas para cada médico (apenas os que são de plantão)
             Object.values(doctors).forEach(doctor => {
-                // ALTERAÇÃO 3: Mostrar apenas médicos que são de plantão
                 if (doctor.plantao !== 'sim') {
                     return;
                 }
@@ -2173,7 +2159,6 @@
                     html += `<td class="${dayClass}">`;
                     
                     if (isHoliday) {
-                        // Em feriados, mostrar como desabilitado
                         html += `<select class="shift-select holiday" disabled title="Feriado - Plantão não disponível">
                                 <option value="">Feriado</option>
                             </select>`;
@@ -2210,7 +2195,6 @@
                 delete shifts[shiftId];
             }
             
-            // Atualizar classe CSS
             select.className = `shift-select ${shift}`;
             
             await saveToFirebase('plantao', shifts);
@@ -2232,11 +2216,9 @@
                 return;
             }
             
-            // Calcular totais por médico para o mês selecionado
             const doctorTotals = {};
             
             Object.values(doctors).forEach(doctor => {
-                // ALTERAÇÃO 3: Incluir apenas médicos de plantão no resumo
                 if (doctor.plantao === 'sim') {
                     doctorTotals[doctor.nome] = {
                         M: 0,
@@ -2247,19 +2229,16 @@
                 }
             });
             
-            // Contar plantões do mês selecionado
             Object.entries(shifts).forEach(([shiftId, shiftType]) => {
                 const parts = shiftId.split('_');
                 const date = parts[1];
                 const doctorName = parts.slice(2).join(' ').replace(/_/g, ' ');
                 
-                // Verificar se é do mês selecionado
                 const shiftDate = new Date(date);
                 if (shiftDate.getFullYear() === year && (shiftDate.getMonth() + 1) === month) {
                     if (doctorTotals[doctorName]) {
                         doctorTotals[doctorName][shiftType]++;
                         
-                        // Calcular valor
                         if (shiftType === 'M' || shiftType === 'T') {
                             doctorTotals[doctorName].totalValue += 500;
                         } else if (shiftType === 'M-T') {
@@ -2298,7 +2277,6 @@
                 `;
             });
             
-            // Totais gerais
             const grandTotals = {
                 M: Object.values(doctorTotals).reduce((sum, doc) => sum + doc.M, 0),
                 T: Object.values(doctorTotals).reduce((sum, doc) => sum + doc.T, 0),
@@ -2347,12 +2325,10 @@
         }
 
         function updateDashboard() {
-            // Aplicar filtros
             let filteredBudgets = filterBudgetsByDate(budgets);
             let filteredSales = filterSalesByDate(sales);
             
             const totalBudgets = Object.keys(filteredBudgets).length;
-            // CORREÇÃO: Somar apenas orçamentos aprovados
             const totalValue = Object.values(filteredBudgets).reduce((sum, budget) => {
                 const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
                 return status === 'aprovado' ? sum + budget.valor_final : sum;
@@ -2362,7 +2338,6 @@
             const totalSalesValue = Object.values(filteredSales).reduce((sum, sale) => sum + sale.valor_final, 0);
             const totalDoctors = Object.keys(doctors).length;
             
-            // Calcular status dos orçamentos (compatível com versão anterior)
             const approvedBudgets = Object.values(filteredBudgets).filter(budget => 
                 budget.status === 'aprovado' || budget.aprovado === true
             ).length;
@@ -2373,7 +2348,6 @@
                 !budget.status && !budget.aprovado
             ).length;
             
-            // Calcular taxa de conversão
             const conversionRate = totalBudgets > 0 ? ((approvedBudgets / totalBudgets) * 100).toFixed(1) : 0;
             
             const currentMonth = new Date().getMonth();
@@ -2383,7 +2357,6 @@
                 return budgetDate.getMonth() === currentMonth && budgetDate.getFullYear() === currentYear;
             }).length;
             
-            // Atualizar apenas os elementos que existem
             const elements = {
                 'totalBudgets': totalBudgets,
                 'totalValue': `R$ ${totalValue.toFixed(2)}`,
@@ -2411,17 +2384,14 @@
         function filterBudgetsByDate(budgetsToFilter) {
             return Object.fromEntries(
                 Object.entries(budgetsToFilter).filter(([id, budget]) => {
-                    // Filtro por data início
                     if (dashboardFilters.startDate && budget.data < dashboardFilters.startDate) {
                         return false;
                     }
                     
-                    // Filtro por data fim
                     if (dashboardFilters.endDate && budget.data > dashboardFilters.endDate) {
                         return false;
                     }
                     
-                    // Filtro por mês
                     if (dashboardFilters.month) {
                         const budgetDate = new Date(budget.data);
                         const budgetMonth = budgetDate.toISOString().slice(0, 7);
@@ -2438,17 +2408,14 @@
         function filterSalesByDate(salesToFilter) {
             return Object.fromEntries(
                 Object.entries(salesToFilter).filter(([id, sale]) => {
-                    // Filtro por data início
                     if (dashboardFilters.startDate && sale.data < dashboardFilters.startDate) {
                         return false;
                     }
                     
-                    // Filtro por data fim
                     if (dashboardFilters.endDate && sale.data > dashboardFilters.endDate) {
                         return false;
                     }
                     
-                    // Filtro por mês
                     if (dashboardFilters.month) {
                         const saleDate = new Date(sale.data);
                         const saleMonth = saleDate.toISOString().slice(0, 7);
@@ -2505,7 +2472,6 @@
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Calcular dados (compatível com versão anterior)
             const approved = Object.values(budgets).filter(budget => 
                 budget.status === 'aprovado' || budget.aprovado === true
             ).length;
@@ -2525,7 +2491,6 @@
             
             let startAngle = 0;
             
-            // Aprovados (verde)
             if (approved > 0) {
                 const approvedAngle = (approved / total) * 2 * Math.PI;
                 ctx.beginPath();
@@ -2537,7 +2502,6 @@
                 startAngle += approvedAngle;
             }
             
-            // Reprovados (vermelho)
             if (rejected > 0) {
                 const rejectedAngle = (rejected / total) * 2 * Math.PI;
                 ctx.beginPath();
@@ -2549,7 +2513,6 @@
                 startAngle += rejectedAngle;
             }
             
-            // Pendentes (amarelo)
             if (pending > 0) {
                 const pendingAngle = (pending / total) * 2 * Math.PI;
                 ctx.beginPath();
@@ -2560,7 +2523,6 @@
                 ctx.fill();
             }
             
-            // Legenda
             ctx.fillStyle = '#2c3e50';
             ctx.font = '12px Arial';
             ctx.textAlign = 'left';
