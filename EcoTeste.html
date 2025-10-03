@@ -652,6 +652,54 @@
             font-weight: bold;
         }
 
+        /* ============================================= */
+        /* ESTILOS PARA O SISTEMA DE AUTENTICAÇÃO */
+        /* ============================================= */
+        
+        .user-welcome-badge {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.95);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #00855B;
+            backdrop-filter: blur(10px);
+        }
+        
+        .auth-message {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.95);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 10000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #f39c12;
+            backdrop-filter: blur(10px);
+        }
+        
+        .access-denied-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-left: 4px solid #e74c3c;
+            max-width: 400px;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -731,6 +779,20 @@
                 margin-right: 0;
                 margin-bottom: 5px;
                 border-radius: 5px;
+            }
+
+            .user-welcome-badge {
+                top: 5px;
+                right: 5px;
+                left: 5px;
+                text-align: center;
+            }
+
+            .auth-message {
+                top: 60px;
+                left: 10px;
+                right: 10px;
+                transform: none;
             }
         }
     </style>
@@ -3673,7 +3735,8 @@
             
             showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success', 'budgetAlert');
         }
-                // =============================================
+
+        // =============================================
         // SISTEMA DE AUTENTICAÇÃO VIA SHAREPOINT
         // =============================================
 
@@ -3911,19 +3974,7 @@
                 
                 const welcomeDiv = document.createElement('div');
                 welcomeDiv.id = 'user-welcome-badge';
-                welcomeDiv.style.cssText = `
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    background: rgba(255,255,255,0.95);
-                    padding: 8px 12px;
-                    border-radius: 8px;
-                    font-size: 12px;
-                    z-index: 10000;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    border-left: 4px solid #00855B;
-                    backdrop-filter: blur(10px);
-                `;
+                welcomeDiv.className = 'user-welcome-badge';
                 
                 const names = this.userData.name.split(' ');
                 const firstName = names[0];
@@ -3943,20 +3994,7 @@
             // Mostrar mensagem de não autorizado
             showUnauthorizedMessage() {
                 const messageDiv = document.createElement('div');
-                messageDiv.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255,255,255,0.95);
-                    padding: 20px;
-                    border-radius: 10px;
-                    text-align: center;
-                    z-index: 10000;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-                    border-left: 4px solid #e74c3c;
-                    max-width: 400px;
-                `;
+                messageDiv.className = 'access-denied-message';
                 
                 messageDiv.innerHTML = `
                     <h3 style="color: #e74c3c; margin-bottom: 10px;">Acesso Limitado</h3>
@@ -3985,20 +4023,7 @@
             showAuthMessage() {
                 const authDiv = document.createElement('div');
                 authDiv.id = 'auth-message';
-                authDiv.style.cssText = `
-                    position: fixed;
-                    top: 10px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: rgba(255,255,255,0.95);
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    font-size: 12px;
-                    z-index: 10000;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                    border-left: 4px solid #f39c12;
-                    backdrop-filter: blur(10px);
-                `;
+                authDiv.className = 'auth-message';
                 
                 authDiv.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px;">
