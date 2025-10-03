@@ -599,6 +599,59 @@
             background: #e9ecef;
         }
 
+        /* NOVO ESTILO ADICIONADO - Botão de relatório PDF */
+        .report-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background 0.3s ease;
+        }
+        
+        .report-btn:hover {
+            background: #c0392b;
+        }
+
+        /* NOVOS ESTILOS PARA RELATÓRIO COLORIDO */
+        .shift-cell.M { background: #d4f8d4 !important; color: #000; }
+        .shift-cell.T { background: #f8f4d4 !important; color: #000; }
+        .shift-cell.M-T { background: #d4e8f8 !important; color: #000; }
+        .shift-cell.holiday { background: #ffebee !important; color: #000; }
+        .shift-cell.weekend { background: #fff0f0 !important; color: #000; }
+
+        /* Estilos para a nova aba Repasse Médico */
+        .repasse-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .repasse-summary {
+            margin-top: 20px;
+        }
+
+        .repasse-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .repasse-totals {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -697,6 +750,8 @@
         <button class="nav-tab" onclick="showSection('sales')">Consultas</button>
         <br>
         <button class="nav-tab" onclick="showSection('shifts')">Plantão</button>
+        <br>
+        <button class="nav-tab" onclick="showSection('repasse')">Repasse Médico</button>
         <br>
     </div>
     <div class="container">
@@ -948,8 +1003,8 @@
                     </div>
                     <div class="col">
                         <div class="form-group">
-                            <label for="budgetDoctorName">Médico Responsável <span class="required">*</span></label>
-                            <input type="text" id="budgetDoctorName" required placeholder="Digite o nome do médico">
+                            <label for="doctorName">Médico Responsável <span class="required">*</span></label>
+                            <input type="text" id="doctorName" required placeholder="Digite o nome do médico">
                         </div>
                     </div>
                 </div>
@@ -1219,6 +1274,13 @@
                     </div>
                 </div>
 
+                <!-- NOVO BOTÃO ADICIONADO - Relatório PDF de Plantões -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="report-btn" onclick="generateShiftsReport()">
+                        📄 Gerar Relatório PDF de Plantões
+                    </button>
+                </div>
+
                 <div class="doctors-summary">
                     <h3>Resumo de Plantões</h3>
                     
@@ -1232,6 +1294,49 @@
                     </div>
                     
                     <div id="shiftsSummary"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repasse Médico Section -->
+        <div id="repasse" class="content-section">
+            <h2>Repasse Médico</h2>
+            
+            <div class="repasse-container">
+                <h3>Relatório de Repasses</h3>
+                
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="repasseDoctor">Selecionar Médico</label>
+                            <select id="repasseDoctor" onchange="generateRepasseReport()">
+                                <option value="">Selecione um médico</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="repasseType">Tipo de Atendimento</label>
+                            <select id="repasseType" onchange="generateRepasseReport()">
+                                <option value="particular">Particular</option>
+                                <option value="unimed">Convênio Unimed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <label for="repasseMonth">Mês de Referência</label>
+                            <input type="month" id="repasseMonth" onchange="generateRepasseReport()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="repasse-summary">
+                    <div id="repasseReport">
+                        <p style="text-align: center; color: #7f8c8d;">
+                            Selecione um médico para gerar o relatório de repasse
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1315,12 +1420,39 @@
             document.getElementById('shiftMonth').value = currentMonth;
             document.getElementById('summaryMonth').value = currentMonth;
 
+            // Configurar mês atual para repasse
+            document.getElementById('repasseMonth').value = currentMonth;
+            
+            // Carregar médicos para repasse
+            loadRepasseDoctors();
+
             // Selecionar "Nenhum" como opção padrão de desconto
             selectDiscountOption(document.querySelector('[data-percentage="0"]'), 0);
             
             // Generate initial calendar
             generateCalendar();
         });
+
+        // CORREÇÃO: Função para calcular valor do plantão considerando fins de semana
+        function calculateShiftValue(shiftType, date) {
+            const dayOfWeek = date.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = Domingo, 6 = Sábado
+            
+            if (isWeekend) {
+                return 450.00; // Valor fixo para fins de semana
+            }
+            
+            // Valores para dias úteis
+            switch(shiftType) {
+                case 'M':
+                case 'T':
+                    return 500.00;
+                case 'M-T':
+                    return 1000.00;
+                default:
+                    return 0.00;
+            }
+        }
 
         // Funções para controle do desconto
         function selectDiscountOption(element, percentage) {
@@ -1380,6 +1512,9 @@
             } else if (sectionId === 'shifts') {
                 generateCalendar();
                 updateShiftsSummary();
+            } else if (sectionId === 'repasse') {
+                loadRepasseDoctors();
+                generateRepasseReport();
             }
         }
 
@@ -1447,6 +1582,7 @@
             displayDoctors();
             loadDoctorOptions('saleDoctorName');
             loadDoctorOptions('filterDoctor');
+            loadRepasseDoctors();
         }
 
         async function loadDoctors() {
@@ -1454,6 +1590,7 @@
             displayDoctors();
             loadDoctorOptions('saleDoctorName');
             loadDoctorOptions('filterDoctor');
+            loadRepasseDoctors();
         }
 
         function displayDoctors() {
@@ -1550,6 +1687,25 @@
             }
         }
 
+        // NOVA FUNÇÃO: Carregar opções de médicos para repasse
+        function loadRepasseDoctors() {
+            const select = document.getElementById('repasseDoctor');
+            const currentValue = select.value;
+            
+            select.innerHTML = '<option value="">Selecione um médico</option>';
+            
+            Object.values(doctors).forEach(doctor => {
+                const option = document.createElement('option');
+                option.value = doctor.nome;
+                option.textContent = doctor.nome;
+                select.appendChild(option);
+            });
+            
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        }
+
         async function deleteDoctor(doctorId) {
             if (confirm('Tem certeza que deseja excluir este médico?')) {
                 delete doctors[doctorId];
@@ -1557,6 +1713,7 @@
                 displayDoctors();
                 loadDoctorOptions('saleDoctorName');
                 loadDoctorOptions('filterDoctor');
+                loadRepasseDoctors();
                 showAlert('Médico excluído com sucesso!', 'success', 'doctorAlert');
             }
         }
@@ -1686,7 +1843,7 @@
             event.preventDefault();
             
             const patientName = document.getElementById('patientName').value;
-            const doctorName = document.getElementById('budgetDoctorName').value;
+            const doctorName = document.getElementById('doctorName').value;
             const responsibleName = document.getElementById('responsibleName').value;
             const selectedProcedureId = document.getElementById('selectedProcedure').value;
             
@@ -2182,6 +2339,7 @@
             calendarDiv.innerHTML = html;
         }
 
+        // CORREÇÃO: Atualizar função saveShift para corrigir dia 1
         async function saveShift(select) {
             const date = select.getAttribute('data-date');
             const doctor = select.getAttribute('data-doctor');
@@ -2199,6 +2357,9 @@
             
             await saveToFirebase('plantao', shifts);
             updateShiftsSummary();
+            
+            // Forçar atualização do calendário para corrigir dia 1
+            generateCalendar();
         }
 
         async function loadShifts() {
@@ -2206,6 +2367,7 @@
             updateShiftsSummary();
         }
 
+        // CORREÇÃO: Atualizar função updateShiftsSummary
         function updateShiftsSummary() {
             const summaryDiv = document.getElementById('shiftsSummary');
             const summaryMonth = document.getElementById('summaryMonth').value;
@@ -2239,11 +2401,9 @@
                     if (doctorTotals[doctorName]) {
                         doctorTotals[doctorName][shiftType]++;
                         
-                        if (shiftType === 'M' || shiftType === 'T') {
-                            doctorTotals[doctorName].totalValue += 500;
-                        } else if (shiftType === 'M-T') {
-                            doctorTotals[doctorName].totalValue += 1000;
-                        }
+                        // Usar a nova função para calcular o valor
+                        const shiftValue = calculateShiftValue(shiftType, shiftDate);
+                        doctorTotals[doctorName].totalValue += shiftValue;
                     }
                 }
             });
@@ -2300,6 +2460,547 @@
             `;
             
             summaryDiv.innerHTML = html;
+        }
+
+        // CORREÇÃO: Atualizar função generateShiftsReport para relatório colorido
+        function generateShiftsReport() {
+            const monthInput = document.getElementById('shiftMonth').value;
+            if (!monthInput) {
+                alert('Por favor, selecione um mês para gerar o relatório.');
+                return;
+            }
+            
+            const [year, month] = monthInput.split('-').map(Number);
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const monthName = monthNames[month - 1];
+            
+            // Filtrar médicos que fazem plantão
+            const doctorsWithShifts = Object.values(doctors).filter(doctor => doctor.plantao === 'sim');
+            
+            if (doctorsWithShifts.length === 0) {
+                alert('Não há médicos cadastrados para plantão.');
+                return;
+            }
+            
+            // Calcular dias do mês
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Criar conteúdo HTML para o PDF
+            let htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Relatório de Plantões - ${monthName}/${year}</title>
+                    <style>
+                        @page {
+                            size: landscape;
+                            margin: 0.5cm;
+                        }
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            background: white;
+                        }
+                        .header {
+                            text-align: center;
+                            padding: 20px;
+                            border-bottom: 2px solid #3498db;
+                            margin-bottom: 20px;
+                        }
+                        .header h1 {
+                            color: #2c3e50;
+                            margin: 0;
+                            font-size: 24px;
+                        }
+                        .header h2 {
+                            color: #7f8c8d;
+                            margin: 5px 0 0 0;
+                            font-size: 18px;
+                        }
+                        .calendar-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 10px;
+                            margin-bottom: 20px;
+                        }
+                        .calendar-table th, .calendar-table td {
+                            border: 1px solid #ddd;
+                            padding: 4px;
+                            text-align: center;
+                            vertical-align: middle;
+                        }
+                        .calendar-table th {
+                            background: #f8f9fa;
+                            font-weight: bold;
+                        }
+                        .calendar-table .day-header {
+                            background: #3498db;
+                            color: white;
+                            font-weight: bold;
+                        }
+                        .calendar-table .weekend {
+                            background: #fff0f0;
+                        }
+                        .calendar-table .holiday {
+                            background: #ffebee;
+                        }
+                        .calendar-table .doctor-name {
+                            background: #f8f9fa;
+                            font-weight: bold;
+                            text-align: left;
+                            padding-left: 8px;
+                            min-width: 120px;
+                        }
+                        .shift-cell {
+                            width: 20px;
+                            height: 20px;
+                            text-align: center;
+                            font-weight: bold;
+                            border: 1px solid #ddd;
+                        }
+                        .shift-cell.M { background: #d4f8d4 !important; color: #000; }
+                        .shift-cell.T { background: #f8f4d4 !important; color: #000; }
+                        .shift-cell.M-T { background: #d4e8f8 !important; color: #000; }
+                        .shift-cell.holiday { background: #ffebee !important; color: #000; }
+                        .shift-cell.weekend { background: #fff0f0 !important; color: #000; }
+                        .legend {
+                            display: flex;
+                            justify-content: center;
+                            gap: 20px;
+                            margin: 20px 0;
+                            flex-wrap: wrap;
+                        }
+                        .legend-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        }
+                        .legend-color {
+                            width: 15px;
+                            height: 15px;
+                            border-radius: 2px;
+                            border: 1px solid #ddd;
+                        }
+                        .legend-color.M { background: #d4f8d4; }
+                        .legend-color.T { background: #f8f4d4; }
+                        .legend-color.M-T { background: #d4e8f8; }
+                        .legend-color.weekend { background: #fff0f0; }
+                        .legend-color.holiday { background: #ffebee; }
+                        .summary-section {
+                            margin-top: 30px;
+                            page-break-before: always;
+                        }
+                        .summary-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            font-size: 12px;
+                        }
+                        .summary-table th, .summary-table td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: center;
+                        }
+                        .summary-table th {
+                            background: #f8f9fa;
+                            font-weight: bold;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 30px;
+                            color: #7f8c8d;
+                            font-size: 10px;
+                            border-top: 1px solid #ddd;
+                            padding-top: 10px;
+                        }
+                        @media print {
+                            body { 
+                                background: white; 
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .shift-cell {
+                                -webkit-print-color-adjust: exact;
+                                color-adjust: exact;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>ECO - CENTRO DE INFUSÕES</h1>
+                        <h2>Relatório de Plantões - ${monthName}/${year}</h2>
+                    </div>
+                    
+                    <table class="calendar-table">
+                        <thead>
+                            <tr>
+                                <th class="doctor-name">Médico/Dia</th>
+            `;
+            
+            // Adicionar cabeçalhos dos dias
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = date.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isHoliday = feriados.includes(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
+                const dayClass = isHoliday ? 'holiday' : (isWeekend ? 'weekend' : 'day-header');
+                
+                htmlContent += `<th class="${dayClass}">${day}<br>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dayOfWeek]}</th>`;
+            }
+            
+            htmlContent += `</tr></thead><tbody>`;
+            
+            // Adicionar linhas para cada médico
+            doctorsWithShifts.forEach(doctor => {
+                htmlContent += `<tr><td class="doctor-name">${doctor.nome}</td>`;
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                    const currentDate = new Date(year, month - 1, day);
+                    const dayOfWeek = currentDate.getDay();
+                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                    const isHoliday = feriados.includes(date);
+                    const dayClass = isHoliday ? 'holiday' : (isWeekend ? 'weekend' : '');
+                    
+                    const shiftId = `shift_${date}_${doctor.nome.replace(/\s+/g, '_')}`;
+                    const currentShift = shifts[shiftId] || '';
+                    
+                    htmlContent += `<td class="${dayClass}">`;
+                    
+                    if (isHoliday) {
+                        htmlContent += `<div class="shift-cell holiday" title="Feriado">F</div>`;
+                    } else if (currentShift) {
+                        htmlContent += `<div class="shift-cell ${currentShift}" title="${getShiftFullName(currentShift)}">${currentShift}</div>`;
+                    } else {
+                        htmlContent += `<div class="shift-cell">-</div>`;
+                    }
+                    
+                    htmlContent += `</td>`;
+                }
+                htmlContent += `</tr>`;
+            });
+            
+            htmlContent += `</tbody></table>`;
+            
+            // Adicionar legenda
+            htmlContent += `
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color M"></div>
+                        <span>M: Manhã</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color T"></div>
+                        <span>T: Tarde</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color M-T"></div>
+                        <span>M-T: Manhã e Tarde</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color weekend"></div>
+                        <span>Final de Semana</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color holiday"></div>
+                        <span>Feriado</span>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar resumo de plantões
+            htmlContent += `<div class="summary-section">`;
+            htmlContent += `<h3>Resumo de Plantões - ${monthName}/${year}</h3>`;
+            
+            const doctorTotals = {};
+            
+            doctorsWithShifts.forEach(doctor => {
+                doctorTotals[doctor.nome] = {
+                    M: 0,
+                    T: 0,
+                    'M-T': 0,
+                    totalValue: 0
+                };
+            });
+            
+            Object.entries(shifts).forEach(([shiftId, shiftType]) => {
+                const parts = shiftId.split('_');
+                const date = parts[1];
+                const doctorName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                
+                const shiftDate = new Date(date);
+                if (shiftDate.getFullYear() === year && (shiftDate.getMonth() + 1) === month) {
+                    if (doctorTotals[doctorName]) {
+                        doctorTotals[doctorName][shiftType]++;
+                        
+                        // Usar a nova função para calcular o valor
+                        const shiftValue = calculateShiftValue(shiftType, shiftDate);
+                        doctorTotals[doctorName].totalValue += shiftValue;
+                    }
+                }
+            });
+            
+            htmlContent += `
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Médico</th>
+                            <th>Manhã (M)</th>
+                            <th>Tarde (T)</th>
+                            <th>Inteiro (M-T)</th>
+                            <th>Total Plantões</th>
+                            <th>Valor Total (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            Object.entries(doctorTotals).forEach(([doctorName, totals]) => {
+                const totalShifts = totals.M + totals.T + totals['M-T'];
+                htmlContent += `
+                    <tr>
+                        <td>${doctorName}</td>
+                        <td>${totals.M}</td>
+                        <td>${totals.T}</td>
+                        <td>${totals['M-T']}</td>
+                        <td>${totalShifts}</td>
+                        <td>R$ ${totals.totalValue.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            const grandTotals = {
+                M: Object.values(doctorTotals).reduce((sum, doc) => sum + doc.M, 0),
+                T: Object.values(doctorTotals).reduce((sum, doc) => sum + doc.T, 0),
+                'M-T': Object.values(doctorTotals).reduce((sum, doc) => sum + doc['M-T'], 0),
+                totalValue: Object.values(doctorTotals).reduce((sum, doc) => sum + doc.totalValue, 0)
+            };
+            
+            const grandTotalShifts = grandTotals.M + grandTotals.T + grandTotals['M-T'];
+            
+            htmlContent += `
+                    <tr style="background-color: #f8f9fa; font-weight: bold;">
+                        <td>TOTAL GERAL</td>
+                        <td>${grandTotals.M}</td>
+                        <td>${grandTotals.T}</td>
+                        <td>${grandTotals['M-T']}</td>
+                        <td>${grandTotalShifts}</td>
+                        <td>R$ ${grandTotals.totalValue.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+            `;
+            
+            htmlContent += `</div>`;
+            
+            // Adicionar rodapé
+            htmlContent += `
+                <div class="footer">
+                    <p>Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                </div>
+            `;
+            
+            htmlContent += `</body></html>`;
+            
+            // Abrir nova janela para impressão
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            // Aguardar o carregamento completo antes de imprimir
+            printWindow.onload = function() {
+                printWindow.print();
+            };
+        }
+        
+        // Função auxiliar para obter o nome completo do turno
+        function getShiftFullName(shiftCode) {
+            switch(shiftCode) {
+                case 'M': return 'Manhã';
+                case 'T': return 'Tarde';
+                case 'M-T': return 'Manhã e Tarde';
+                default: return '';
+            }
+        }
+
+        // NOVA FUNÇÃO: Gerar relatório de repasse médico
+        function generateRepasseReport() {
+            const doctorName = document.getElementById('repasseDoctor').value;
+            const repasseType = document.getElementById('repasseType').value;
+            const repasseMonth = document.getElementById('repasseMonth').value;
+            
+            if (!doctorName) {
+                document.getElementById('repasseReport').innerHTML = 
+                    '<p style="text-align: center; color: #7f8c8d;">Selecione um médico para gerar o relatório de repasse</p>';
+                return;
+            }
+            
+            const [year, month] = repasseMonth ? repasseMonth.split('-').map(Number) : [new Date().getFullYear(), new Date().getMonth() + 1];
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                               'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const monthName = monthNames[month - 1];
+            
+            let reportHTML = `
+                <h3>Relatório de Repasse - ${doctorName}</h3>
+                <p><strong>Mês de Referência:</strong> ${monthName}/${year}</p>
+                <p><strong>Tipo:</strong> ${repasseType === 'particular' ? 'Particular' : 'Convênio Unimed'}</p>
+            `;
+            
+            // Calcular valores de Plantão
+            let plantaoTotal = 0;
+            const plantaoDetails = [];
+            
+            Object.entries(shifts).forEach(([shiftId, shiftType]) => {
+                const parts = shiftId.split('_');
+                const date = parts[1];
+                const shiftDoctorName = parts.slice(2).join(' ').replace(/_/g, ' ');
+                
+                if (shiftDoctorName === doctorName) {
+                    const shiftDate = new Date(date);
+                    if (shiftDate.getFullYear() === year && (shiftDate.getMonth() + 1) === month) {
+                        const shiftValue = calculateShiftValue(shiftType, shiftDate);
+                        plantaoTotal += shiftValue;
+                        
+                        plantaoDetails.push({
+                            data: date,
+                            turno: shiftType,
+                            valor: shiftValue
+                        });
+                    }
+                }
+            });
+            
+            // Calcular valores de Consultas (Particular)
+            let consultasTotal = 0;
+            const consultasDetails = [];
+            
+            Object.values(sales).forEach(sale => {
+                if (sale.medico === doctorName) {
+                    const saleDate = new Date(sale.data);
+                    if (saleDate.getFullYear() === year && (saleDate.getMonth() + 1) === month) {
+                        consultasTotal += sale.valor_final;
+                        
+                        consultasDetails.push({
+                            data: sale.data,
+                            paciente: sale.paciente,
+                            procedimento: sale.procedimento,
+                            valor: sale.valor_final
+                        });
+                    }
+                }
+            });
+            
+            // Calcular valores de Orçamentos Aprovados (Particular)
+            let orcamentosTotal = 0;
+            const orcamentosDetails = [];
+            
+            Object.values(budgets).forEach(budget => {
+                if (budget.medico === doctorName && (budget.status === 'aprovado' || budget.aprovado === true)) {
+                    const budgetDate = new Date(budget.data);
+                    if (budgetDate.getFullYear() === year && (budgetDate.getMonth() + 1) === month) {
+                        orcamentosTotal += budget.valor_final;
+                        
+                        orcamentosDetails.push({
+                            data: budget.data,
+                            paciente: budget.paciente,
+                            procedimento: budget.procedimento,
+                            valor: budget.valor_final
+                        });
+                    }
+                }
+            });
+            
+            // Montar relatório
+            reportHTML += `
+                <div class="repasse-item">
+                    <h4>🌙 Plantões</h4>
+                    <p><strong>Total:</strong> R$ ${plantaoTotal.toFixed(2)}</p>
+                    ${plantaoDetails.length > 0 ? `
+                        <details>
+                            <summary>Ver detalhes (${plantaoDetails.length} plantões)</summary>
+                            <ul style="font-size: 12px; margin-top: 10px;">
+                                ${plantaoDetails.map(detail => 
+                                    `<li>${formatDateForDisplay(detail.data)} - ${getShiftFullName(detail.turno)}: R$ ${detail.valor.toFixed(2)}</li>`
+                                ).join('')}
+                            </ul>
+                        </details>
+                    ` : '<p>Nenhum plantão registrado</p>'}
+                </div>
+                
+                <div class="repasse-item">
+                    <h4>🩺 Consultas (Particular)</h4>
+                    <p><strong>Total:</strong> R$ ${consultasTotal.toFixed(2)}</p>
+                    ${consultasDetails.length > 0 ? `
+                        <details>
+                            <summary>Ver detalhes (${consultasDetails.length} consultas)</summary>
+                            <ul style="font-size: 12px; margin-top: 10px;">
+                                ${consultasDetails.map(detail => 
+                                    `<li>${formatDateForDisplay(detail.data)} - ${detail.paciente} - ${detail.procedimento}: R$ ${detail.valor.toFixed(2)}</li>`
+                                ).join('')}
+                            </ul>
+                        </details>
+                    ` : '<p>Nenhuma consulta registrada</p>'}
+                </div>
+            `;
+            
+            if (repasseType === 'particular') {
+                reportHTML += `
+                    <div class="repasse-item">
+                        <h4>📋 Orçamentos Aprovados (Particular)</h4>
+                        <p><strong>Total:</strong> R$ ${orcamentosTotal.toFixed(2)}</p>
+                        ${orcamentosDetails.length > 0 ? `
+                            <details>
+                                <summary>Ver detalhes (${orcamentosDetails.length} orçamentos)</summary>
+                                <ul style="font-size: 12px; margin-top: 10px;">
+                                    ${orcamentosDetails.map(detail => 
+                                        `<li>${formatDateForDisplay(detail.data)} - ${detail.paciente} - ${detail.procedimento}: R$ ${detail.valor.toFixed(2)}</li>`
+                                    ).join('')}
+                                </ul>
+                            </details>
+                        ` : '<p>Nenhum orçamento aprovado</p>'}
+                    </div>
+                `;
+            } else {
+                reportHTML += `
+                    <div class="repasse-item">
+                        <h4>📋 Convênio Unimed</h4>
+                        <p><em>Funcionalidade em desenvolvimento</em></p>
+                    </div>
+                `;
+            }
+            
+            // Total Geral
+            const totalGeral = plantaoTotal + consultasTotal + (repasseType === 'particular' ? orcamentosTotal : 0);
+            
+            reportHTML += `
+                <div class="repasse-totals">
+                    <h4>💰 Total Geral: R$ ${totalGeral.toFixed(2)}</h4>
+                    <p style="font-size: 12px; margin: 5px 0 0 0;">
+                        Plantões: R$ ${plantaoTotal.toFixed(2)} | 
+                        Consultas: R$ ${consultasTotal.toFixed(2)} | 
+                        ${repasseType === 'particular' ? `Orçamentos: R$ ${orcamentosTotal.toFixed(2)}` : 'Unimed: R$ 0,00'}
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateRepassePDF('${doctorName}', '${repasseType}', ${year}, ${month})">
+                        📄 Gerar PDF do Repasse
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('repasseReport').innerHTML = reportHTML;
+        }
+
+        // NOVA FUNÇÃO: Gerar PDF do repasse
+        function generateRepassePDF(doctorName, repasseType, year, month) {
+            // Implementação similar à generateShiftsReport mas para repasse
+            alert(`PDF de repasse para ${doctorName} será gerado em breve!`);
         }
 
         // Dashboard functions
@@ -2881,8 +3582,8 @@
                                 <p>SALA DE INFUSÃO - CAMA</p>
                             </div>
                             <div class="image-item">
-                                <img src="touca_capilar.jpg" alt="PAXMAN - Touca Capilar" loading="lazy">
-                                <p>PAXMAN - TOUCA CAPILAR</p>
+                                <img src="hall_enfermagem.jpg" alt="Hall de Entrada" loading="lazy">
+                                <p>HALL DE ENTRADA</p>
                             </div>
                             <div class="image-item">
                                 <img src="recepcao_externa.jpg" alt="Recepção - Consultórios" loading="lazy">
@@ -2972,8 +3673,503 @@
             
             showAlert('PDF gerado com sucesso! O orçamento inicia na segunda página.', 'success', 'budgetAlert');
         }
+                // =============================================
+        // SISTEMA DE AUTENTICAÇÃO VIA SHAREPOINT
+        // =============================================
+
+        class SharePointAuth {
+            constructor() {
+                this.userData = null;
+                this.userPermissions = [];
+                this.init();
+            }
+            
+            init() {
+                console.log('🚀 Iniciando sistema de autenticação SharePoint...');
+                this.checkURLParameters();
+                this.setupMessageListener();
+                this.requestUserData();
+                this.setupAuthCheck();
+            }
+            
+            // Verificar parâmetros da URL
+            checkURLParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const spUser = urlParams.get('spUser');
+                const spName = urlParams.get('spName');
+                
+                if (spUser && spUser.includes('@ecooncologia.com.br')) {
+                    this.userData = {
+                        email: decodeURIComponent(spUser),
+                        name: decodeURIComponent(spName || ''),
+                        domain: 'ecooncologia.com.br',
+                        source: 'sharepoint_url',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    console.log('✅ Usuário detectado via URL:', this.userData);
+                    this.saveUserData();
+                    this.applyUserPermissions();
+                }
+            }
+            
+            // Configurar listener para postMessage
+            setupMessageListener() {
+                window.addEventListener('message', (event) => {
+                    // Aceitar mensagens de qualquer origem (para desenvolvimento)
+                    // Em produção, você deve verificar a origem: event.origin === 'https://seusite.sharepoint.com'
+                    
+                    if (event.data.type === 'SHAREPOINT_USER_DATA' || 
+                        event.data.type === 'SHAREPOINT_USER_AUTH') {
+                        
+                        const userData = event.data.data;
+                        if (userData.email && userData.email.includes('@ecooncologia.com.br')) {
+                            this.userData = userData;
+                            console.log('✅ Usuário detectado via postMessage:', this.userData);
+                            this.saveUserData();
+                            this.applyUserPermissions();
+                            
+                            // Confirmar recebimento
+                            if (event.source && event.source !== window) {
+                                event.source.postMessage({
+                                    type: 'USER_DATA_RECEIVED',
+                                    status: 'success',
+                                    user: userData.email
+                                }, event.origin);
+                            }
+                        }
+                    }
+                    
+                    if (event.data.type === 'USER_PERMISSIONS') {
+                        this.userPermissions = event.data.permissions || [];
+                        console.log('🔐 Permissões recebidas:', this.userPermissions);
+                        this.applyMenuFilter();
+                    }
+                });
+            }
+            
+            // Solicitar dados do usuário
+            requestUserData() {
+                // Solicitar dados para o SharePoint
+                if (window.parent && window.parent !== window) {
+                    setTimeout(() => {
+                        window.parent.postMessage({
+                            type: 'USER_DATA_REQUEST'
+                        }, '*');
+                    }, 1000);
+                }
+            }
+            
+            // Configurar verificação periódica
+            setupAuthCheck() {
+                // Verificar a cada 2 segundos por 10 segundos
+                let attempts = 0;
+                const authInterval = setInterval(() => {
+                    attempts++;
+                    if (this.userData || attempts >= 5) {
+                        clearInterval(authInterval);
+                        if (!this.userData) {
+                            console.log('⚠️ Não foi possível detectar usuário do SharePoint');
+                            this.showAuthMessage();
+                        }
+                    } else {
+                        this.requestUserData();
+                    }
+                }, 2000);
+            }
+            
+            // Salvar dados localmente
+            saveUserData() {
+                if (this.userData) {
+                    localStorage.setItem('ecoUserData', JSON.stringify(this.userData));
+                    localStorage.setItem('ecoLastAuth', new Date().toISOString());
+                }
+            }
+            
+            // Carregar dados salvos
+            loadUserData() {
+                const savedData = localStorage.getItem('ecoUserData');
+                if (savedData) {
+                    this.userData = JSON.parse(savedData);
+                    return true;
+                }
+                return false;
+            }
+            
+            // Aplicar permissões do usuário
+            async applyUserPermissions() {
+                if (!this.userData) return;
+                
+                console.log('🔐 Aplicando permissões para:', this.userData.email);
+                
+                try {
+                    // Buscar permissões do Firebase
+                    const permissions = await this.getUserPermissions(this.userData.email);
+                    
+                    if (permissions && permissions.length > 0) {
+                        this.userPermissions = permissions;
+                        this.applyMenuFilter();
+                        this.showUserWelcome();
+                        this.logAccess('system_login');
+                    } else {
+                        // Usuário não cadastrado - mostrar apenas dashboard
+                        this.userPermissions = ['dashboard'];
+                        this.applyMenuFilter();
+                        this.showUnauthorizedMessage();
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar permissões:', error);
+                    // Em caso de erro, permitir acesso mínimo
+                    this.userPermissions = ['dashboard'];
+                    this.applyMenuFilter();
+                }
+            }
+            
+            // Buscar permissões do Firebase
+            async getUserPermissions(email) {
+                const firebaseUrl = 'https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com/admin_users.json';
+                
+                try {
+                    const response = await fetch(firebaseUrl);
+                    const users = await response.json();
+                    
+                    if (!users) return null;
+                    
+                    // Encontrar usuário pelo email
+                    for (const [userId, userData] of Object.entries(users)) {
+                        if (userData.email === email && userData.active !== false) {
+                            console.log('✅ Permissões encontradas:', userData.permissions);
+                            return userData.permissions || [];
+                        }
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Erro ao buscar permissões:', error);
+                    return null;
+                }
+            }
+            
+            // Filtrar menu baseado nas permissões
+            applyMenuFilter() {
+                if (this.userPermissions.length === 0) return;
+                
+                console.log('🎯 Filtrando menu com permissões:', this.userPermissions);
+                
+                const allTabs = document.querySelectorAll('.nav-tab');
+                const menuItems = {
+                    'dashboard': document.querySelector('[onclick*="dashboard"]'),
+                    'procedures': document.querySelector('[onclick*="procedures"]'),
+                    'doctors': document.querySelector('[onclick*="doctors"]'),
+                    'budget': document.querySelector('[onclick*="budget"]'),
+                    'budgets': document.querySelector('[onclick*="budgets"]'),
+                    'sales': document.querySelector('[onclick*="sales"]'),
+                    'shifts': document.querySelector('[onclick*="shifts"]'),
+                    'repasse': document.querySelector('[onclick*="repasse"]')
+                };
+                
+                // Esconder itens não permitidos
+                Object.entries(menuItems).forEach(([section, element]) => {
+                    if (element) {
+                        if (!this.userPermissions.includes(section)) {
+                            element.style.display = 'none';
+                        } else {
+                            element.style.display = 'block';
+                        }
+                    }
+                });
+                
+                // Mostrar apenas a primeira aba permitida
+                this.showFirstAllowedSection();
+            }
+            
+            // Mostrar primeira seção permitida
+            showFirstAllowedSection() {
+                const sections = ['dashboard', 'procedures', 'doctors', 'budget', 'budgets', 'sales', 'shifts', 'repasse'];
+                const firstAllowed = sections.find(section => this.userPermissions.includes(section));
+                
+                if (firstAllowed) {
+                    console.log('📁 Mostrando primeira seção permitida:', firstAllowed);
+                    setTimeout(() => {
+                        // Verificar se a seção atual não é permitida
+                        const currentSection = document.querySelector('.content-section.active');
+                        if (currentSection && !this.userPermissions.includes(currentSection.id)) {
+                            showSection(firstAllowed);
+                        }
+                    }, 500);
+                }
+            }
+            
+            // Mostrar mensagem de boas-vindas
+            showUserWelcome() {
+                // Remover welcome anterior se existir
+                const existingWelcome = document.getElementById('user-welcome-badge');
+                if (existingWelcome) {
+                    existingWelcome.remove();
+                }
+                
+                if (!this.userData) return;
+                
+                const welcomeDiv = document.createElement('div');
+                welcomeDiv.id = 'user-welcome-badge';
+                welcomeDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(255,255,255,0.95);
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    font-size: 12px;
+                    z-index: 10000;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    border-left: 4px solid #00855B;
+                    backdrop-filter: blur(10px);
+                `;
+                
+                const names = this.userData.name.split(' ');
+                const firstName = names[0];
+                const lastName = names.length > 1 ? names[names.length - 1] : '';
+                
+                welcomeDiv.innerHTML = `
+                    <div style="font-weight: bold; color: #2c3e50;">${firstName} ${lastName}</div>
+                    <div style="font-size: 10px; color: #7f8c8d;">${this.userData.email}</div>
+                    <div style="font-size: 9px; color: #27ae60; margin-top: 2px;">
+                        🔐 ${this.userPermissions.length} permissões
+                    </div>
+                `;
+                
+                document.body.appendChild(welcomeDiv);
+            }
+            
+            // Mostrar mensagem de não autorizado
+            showUnauthorizedMessage() {
+                const messageDiv = document.createElement('div');
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255,255,255,0.95);
+                    padding: 20px;
+                    border-radius: 10px;
+                    text-align: center;
+                    z-index: 10000;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                    border-left: 4px solid #e74c3c;
+                    max-width: 400px;
+                `;
+                
+                messageDiv.innerHTML = `
+                    <h3 style="color: #e74c3c; margin-bottom: 10px;">Acesso Limitado</h3>
+                    <p style="color: #2c3e50; margin-bottom: 15px;">
+                        Olá <strong>${this.userData?.name || 'Usuário'}</strong>!<br>
+                        Seu usuário não possui permissões completas no sistema.
+                    </p>
+                    <p style="color: #7f8c8d; font-size: 12px;">
+                        Entre em contato com o administrador para liberar acesso às funcionalidades.
+                    </p>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: #3498db;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        margin-top: 10px;
+                    ">Entendido</button>
+                `;
+                
+                document.body.appendChild(messageDiv);
+            }
+            
+            // Mostrar mensagem de autenticação
+            showAuthMessage() {
+                const authDiv = document.createElement('div');
+                authDiv.id = 'auth-message';
+                authDiv.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(255,255,255,0.95);
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-size: 12px;
+                    z-index: 10000;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    border-left: 4px solid #f39c12;
+                    backdrop-filter: blur(10px);
+                `;
+                
+                authDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span>🔐 Aguardando autenticação do SharePoint...</span>
+                        <button onclick="window.spAuth.retryAuth()" style="
+                            background: #3498db;
+                            color: white;
+                            border: none;
+                            padding: 4px 8px;
+                            border-radius: 3px;
+                            cursor: pointer;
+                            font-size: 10px;
+                        ">Tentar Novamente</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(authDiv);
+            }
+            
+            // Tentar autenticação novamente
+            retryAuth() {
+                const authMessage = document.getElementById('auth-message');
+                if (authMessage) {
+                    authMessage.innerHTML = '<div>Tentando autenticação...</div>';
+                }
+                this.requestUserData();
+                
+                setTimeout(() => {
+                    if (!this.userData && authMessage) {
+                        authMessage.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span>❌ Não foi possível autenticar</span>
+                                <button onclick="window.spAuth.retryAuth()" style="
+                                    background: #3498db;
+                                    color: white;
+                                    border: none;
+                                    padding: 4px 8px;
+                                    border-radius: 3px;
+                                    cursor: pointer;
+                                    font-size: 10px;
+                                ">Tentar Novamente</button>
+                            </div>
+                        `;
+                    }
+                }, 3000);
+            }
+            
+            // Registrar acesso
+            logAccess(section) {
+                if (!this.userData) return;
+                
+                const accessLog = {
+                    userEmail: this.userData.email,
+                    userName: this.userData.name,
+                    section: section,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent
+                };
+                
+                // Salvar no Firebase
+                this.saveAccessLog(accessLog);
+            }
+            
+            // Salvar log de acesso no Firebase
+            async saveAccessLog(logData) {
+                try {
+                    const logId = 'access_' + Date.now();
+                    const response = await fetch(`${FIREBASE_URL}/access_logs/${logId}.json`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(logData)
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error('Erro ao salvar log de acesso:', error);
+                }
+            }
+            
+            // Verificar se tem permissão para uma seção
+            hasPermission(section) {
+                return this.userPermissions.includes(section);
+            }
+            
+            // Obter dados do usuário
+            getUserInfo() {
+                return this.userData;
+            }
+        }
+
+        // =============================================
+        // MODIFICAÇÕES NAS FUNÇÕES EXISTENTES
+        // =============================================
+
+        // Sobrescrever a função showSection para verificar permissões
+        const originalShowSection = showSection;
+        showSection = function(sectionId) {
+            // Verificar permissão
+            if (window.spAuth && !window.spAuth.hasPermission(sectionId)) {
+                showAlert('Você não tem permissão para acessar esta seção', 'error', 'budgetAlert');
+                return;
+            }
+            
+            // Registrar acesso
+            if (window.spAuth) {
+                window.spAuth.logAccess(sectionId);
+            }
+            
+            // Chamar função original
+            originalShowSection(sectionId);
+        };
+
+        // =============================================
+        // INICIALIZAÇÃO DO SISTEMA DE AUTENTICAÇÃO
+        // =============================================
+
+        // Inicializar quando o DOM carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aguardar um pouco para o sistema principal carregar
+            setTimeout(() => {
+                window.spAuth = new SharePointAuth();
+                
+                // Verificar se está em ambiente de desenvolvimento (sem SharePoint)
+                if (!window.parent || window.parent === window) {
+                    console.log('🔧 Modo de desenvolvimento - Sem SharePoint');
+                    // Para testes, você pode simular um usuário aqui
+                    // window.spAuth.userData = {
+                    //     email: 'teste@ecooncologia.com.br',
+                    //     name: 'Usuário de Teste',
+                    //     domain: 'ecooncologia.com.br',
+                    //     source: 'dev'
+                    // };
+                    // window.spAuth.userPermissions = ['dashboard', 'procedures', 'budget'];
+                    // window.spAuth.applyMenuFilter();
+                    // window.spAuth.showUserWelcome();
+                }
+            }, 1000);
+        });
+
+        // =============================================
+        // FUNÇÕES ÚTEIS PARA DEBUG
+        // =============================================
+
+        // Função para debug - mostrar informações do usuário
+        window.showUserInfo = function() {
+            if (window.spAuth && window.spAuth.userData) {
+                console.log('👤 Dados do usuário:', window.spAuth.userData);
+                console.log('🔐 Permissões:', window.spAuth.userPermissions);
+                alert(`Usuário: ${window.spAuth.userData.name}\nEmail: ${window.spAuth.userData.email}\nPermissões: ${window.spAuth.userPermissions.join(', ')}`);
+            } else {
+                console.log('❌ Nenhum usuário autenticado');
+                alert('Nenhum usuário autenticado');
+            }
+        };
+
+        // Função para simular usuário (apenas desenvolvimento)
+        window.simulateUser = function(email, permissions = ['dashboard']) {
+            if (window.spAuth) {
+                window.spAuth.userData = {
+                    email: email,
+                    name: 'Usuário Simulado',
+                    domain: 'ecooncologia.com.br',
+                    source: 'simulated'
+                };
+                window.spAuth.userPermissions = permissions;
+                window.spAuth.applyMenuFilter();
+                window.spAuth.showUserWelcome();
+                console.log('👤 Usuário simulado:', email, permissions);
+            }
+        };
     </script>
 </body>
 </html>
-
-
