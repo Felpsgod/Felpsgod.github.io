@@ -948,8 +948,8 @@
                     </div>
                     <div class="col">
                         <div class="form-group">
-                            <label for="doctorName">Médico Responsável <span class="required">*</span></label>
-                            <input type="text" id="doctorName" required placeholder="Digite o nome do médico">
+                            <label for="budgetDoctorName">Médico Responsável <span class="required">*</span></label>
+                            <input type="text" id="budgetDoctorName" required placeholder="Digite o nome do médico">
                         </div>
                     </div>
                 </div>
@@ -1686,7 +1686,7 @@
             event.preventDefault();
             
             const patientName = document.getElementById('patientName').value;
-            const doctorName = document.getElementById('doctorName').value;
+            const doctorName = document.getElementById('budgetDoctorName').value;
             const responsibleName = document.getElementById('responsibleName').value;
             const selectedProcedureId = document.getElementById('selectedProcedure').value;
             
@@ -2975,3 +2975,4 @@
     </script>
 </body>
 </html>
+
