@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Empréstimos - Premium</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --dark-green: #014040;
+            --medium-green: #02735E;
+            --light-green: #03A678;
+            --orange: #F27405;
+            --dark-red: #731702;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
+            color: white;
+            line-height: 1.6;
+            padding: 10px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        header {
+            background: var(--dark-green);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(1, 64, 64, 0.3);
+            text-align: center;
+            border: 2px solid var(--light-green);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--dark-green);
+            border-bottom: 2px solid var(--orange);
+            padding-bottom: 8px;
+        }
+        
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: var(--dark-green);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(1, 64, 64, 0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--light-green);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(1, 64, 64, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-green);
+            font-size: 0.95rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--medium-green);
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: var(--dark-green);
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(242, 116, 5, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(135deg, var(--orange) 0%, var(--dark-red) 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(115, 23, 2, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(115, 23, 2, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
+            box-shadow: 0 4px 10px rgba(3, 166, 120, 0.3);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 6px 15px rgba(3, 166, 120, 0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--orange) 0%, #E55C00 100%);
+            box-shadow: 0 4px 10px rgba(242, 116, 5, 0.3);
+        }
+        
+        .btn-warning:hover {
+            box-shadow: 0 6px 15px rgba(242, 116, 5, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--dark-red) 0%, #8A1C02 100%);
+            box-shadow: 0 4px 10px rgba(115, 23, 2, 0.3);
+        }
+        
+        .btn-danger:hover {
+            box-shadow: 0 6px 15px rgba(115, 23, 2, 0.4);
+        }
+        
+        .btn-small {
+            padding: 10px 15px;
+            font-size: 14px;
+            width: auto;
+            margin: 5px;
+            border-radius: 6px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .dashboard-card {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--dark-green) 0%, var(--medium-green) 100%);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(1, 64, 64, 0.3);
+            border: 1px solid var(--light-green);
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .dashboard-card h3 {
+            font-size: 0.85rem;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(1, 64, 64, 0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: linear-gradient(135deg, var(--dark-green) 0%, var(--medium-green) 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.85rem;
+            color: var(--dark-green);
+        }
+        
+        tr:hover {
+            background-color: rgba(3, 166, 120, 0.1);
+        }
+        
+        .status-pago {
+            color: var(--light-green);
+            font-weight: bold;
+            background: rgba(3, 166, 120, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .status-pendente {
+            color: var(--dark-red);
+            font-weight: bold;
+            background: rgba(115, 23, 2, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .status-atencao {
+            color: var(--orange);
+            font-weight: bold;
+            background: rgba(242, 116, 5, 0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .vencimento-proximo {
+            background-color: rgba(242, 116, 5, 0.1) !important;
+            border-left: 4px solid var(--orange);
+        }
+        
+        .vencimento-hoje {
+            background-color: rgba(115, 23, 2, 0.1) !important;
+            border-left: 4px solid var(--dark-red);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .valor-total {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 15px;
+            color: var(--dark-green);
+            text-align: center;
+            padding: 10px;
+            background: rgba(3, 166, 120, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--orange);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            z-index: 1000;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease-out;
+            max-width: 300px;
+            font-weight: 600;
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
+            border-left: 5px solid var(--dark-green);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, var(--dark-red) 0%, #8A1C02 100%);
+            border-left: 5px solid #5A1301;
+        }
+        
+        .notification.warning {
+            background: linear-gradient(135deg, var(--orange) 0%, #E55C00 100%);
+            border-left: 5px solid #C44C00;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .juros-section {
+            background: linear-gradient(135deg, rgba(1, 64, 64, 0.05) 0%, rgba(2, 115, 94, 0.05) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid rgba(3, 166, 120, 0.2);
+        }
+        
+        .juros-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        /* Melhorias para mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 5px;
+            }
+            
+            header {
+                padding: 15px 0;
+                margin-bottom: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+            }
+            
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .dashboard-card {
+                padding: 15px;
+            }
+            
+            .dashboard-card .value {
+                font-size: 1.3rem;
+            }
+            
+            .juros-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn-small {
+                width: 100%;
+                margin: 3px 0;
+            }
+            
+            table {
+                font-size: 0.8rem;
+                min-width: 650px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 0.75rem;
+            }
+            
+            .dashboard-card .value {
+                font-size: 1.1rem;
+            }
+            
+            .form-group {
+                margin-bottom: 12px;
+            }
+            
+            input, select {
+                padding: 14px;
+            }
+            
+            button {
+                padding: 16px;
+            }
+        }
+        
+        /* Melhorias para tabela em mobile */
+        @media (max-width: 600px) {
+            .table-container {
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(1, 64, 64, 0.2);
+            }
+            
+            table {
+                min-width: 100%;
+            }
+        }
+        
+        /* Efeitos visuais adicionais */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .header-accent {
+            height: 5px;
+            background: linear-gradient(90deg, var(--orange) 0%, var(--dark-red) 100%);
+            border-radius: 0 0 10px 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💎 Sistema de Controle de Empréstimos</h1>
+            <p>Gerencie seus empréstimos com eficiência e estilo</p>
+            <div class="header-accent"></div>
+        </header>
+        
+        <section class="card">
+            <h2>📝 Novo Empréstimo</h2>
+            <form id="loanForm">
+                <div class="form-group">
+                    <label for="nome">👤 Nome Completo:</label>
+                    <input type="text" id="nome" required placeholder="Digite o nome completo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dataEmprestimo">📅 Data do Empréstimo:</label>
+                    <input type="date" id="dataEmprestimo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="valorEmprestimo">💰 Valor do Empréstimo (R$):</label>
+                    <input type="number" id="valorEmprestimo" min="0" step="0.01" required placeholder="0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="dataVencimento">⏰ Data de Vencimento:</label>
+                    <input type="date" id="dataVencimento" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="porcentagem">📊 Porcentagem de Juros (%):</label>
+                    <input type="number" id="porcentagem" min="0" step="0.1" value="30" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" id="submitBtn">🧮 Calcular e Adicionar</button>
+                </div>
+                
+                <div id="valorTotal" class="valor-total hidden"></div>
+            </form>
+        </section>
+        
+        <section class="card">
+            <h2>📊 Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card card pulse">
+                    <h3>Total de Empréstimos</h3>
+                    <div class="value" id="totalEmprestimos">0</div>
+                </div>
+                
+                <div class="dashboard-card card pulse">
+                    <h3>Valor Total Emprestado</h3>
+                    <div class="value" id="valorTotalEmprestado">R$ 0,00</div>
+                </div>
+                
+                <div class="dashboard-card card pulse">
+                    <h3>Pendentes</h3>
+                    <div class="value" id="totalPendentes">0</div>
+                </div>
+                
+                <div class="dashboard-card card pulse">
+                    <h3>Vencimentos Hoje</h3>
+                    <div class="value" id="vencimentosHoje">0</div>
+                </div>
+            </div>
+            
+            <div class="juros-section">
+                <h3>💵 Recebimento de Juros</h3>
+                <div class="juros-grid">
+                    <div class="dashboard-card card">
+                        <h3>Juros Recebidos (Mês)</h3>
+                        <div class="value" id="jurosMensal">R$ 0,00</div>
+                    </div>
+                    
+                    <div class="dashboard-card card">
+                        <h3>Juros Recebidos (Ano)</h3>
+                        <div class="value" id="jurosAnual">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>📋 Empréstimos Pendentes</h2>
+            <div class="table-container">
+                <table id="loansTable">
+                    <thead>
+                        <tr>
+                            <th>👤 Nome</th>
+                            <th>📅 Data</th>
+                            <th>💰 Valor</th>
+                            <th>💸 Valor Atual</th>
+                            <th>⏰ Vencimento</th>
+                            <th>📈 Status</th>
+                            <th>⚡ Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="loansTableBody">
+                        <!-- Dados serão inseridos via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyReplaceWithYours",
+            authDomain: "gerar-orcamento-bd4d1.firebaseapp.com",
+            databaseURL: "https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com",
+            projectId: "gerar-orcamento-bd4d1",
+            storageBucket: "gerar-orcamento-bd4d1.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Array para armazenar os empréstimos
+        let emprestimos = [];
+        
+        // Elementos do DOM
+        const loanForm = document.getElementById('loanForm');
+        const valorTotalDiv = document.getElementById('valorTotal');
+        const loansTableBody = document.getElementById('loansTableBody');
+        const totalEmprestimos = document.getElementById('totalEmprestimos');
+        const valorTotalEmprestado = document.getElementById('valorTotalEmprestado');
+        const totalPendentes = document.getElementById('totalPendentes');
+        const vencimentosHoje = document.getElementById('vencimentosHoje');
+        const jurosMensal = document.getElementById('jurosMensal');
+        const jurosAnual = document.getElementById('jurosAnual');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Função para mostrar notificação
+        function mostrarNotificacao(mensagem, tipo = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${tipo}`;
+            notification.textContent = mensagem;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        // Função para calcular o valor total com a porcentagem
+        function calcularValorTotal(valor, porcentagem) {
+            const acrescimo = valor * (porcentagem / 100);
+            return valor + acrescimo;
+        }
+        
+        // Função para formatar data
+        function formatarData(data) {
+            // Corrigir problema do fuso horário - usar a data exata fornecida
+            const dataObj = new Date(data + 'T00:00:00'); // Força o uso da data exata
+            return dataObj.toLocaleDateString('pt-BR');
+        }
+        
+        // Função para formatar valor monetário
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+        
+        // Função para verificar se a data está próxima (3 dias)
+        function dataProxima(dataVencimento) {
+            const hoje = new Date();
+            const vencimento = new Date(dataVencimento + 'T00:00:00'); // Corrige fuso horário
+            const diferenca = vencimento - hoje;
+            const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+            
+            return dias <= 3 && dias >= 0;
+        }
+        
+        // Função para verificar se a data é hoje
+        function venceHoje(dataVencimento) {
+            const hoje = new Date();
+            const vencimento = new Date(dataVencimento + 'T00:00:00'); // Corrige fuso horário
+            
+            return hoje.toDateString() === vencimento.toDateString();
+        }
+        
+        // Função para adicionar um novo empréstimo
+        function adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem) {
+            const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
+            
+            const emprestimo = {
+                id: Date.now(), // ID único baseado no timestamp
+                nome,
+                dataEmprestimo: dataEmprestimo, // Usa a data exata fornecida
+                valorOriginal: valorEmprestimo,
+                valorAtual: valorTotal,
+                dataVencimento: dataVencimento, // Usa a data exata fornecida
+                porcentagem,
+                status: 'pendente', // pendente ou pago
+                historicoJuros: [],
+                dataCriacao: new Date().toISOString()
+            };
+            
+            // Salvar no Firebase
+            salvarNoFirebase(emprestimo);
+            
+            // Adicionar ao array local
+            emprestimos.push(emprestimo);
+            
+            // Atualizar interface
+            atualizarDashboard();
+            renderizarTabela();
+            
+            // Mostrar notificação para o controlador do sistema
+            mostrarNotificacao('Empréstimo cadastrado com sucesso!');
+            
+            // Verificar se é um vencimento próximo para alertar o controlador
+            if (dataProxima(dataVencimento)) {
+                mostrarNotificacao(
+                    `Atenção: Empréstimo de ${nome} vence em ${formatarData(dataVencimento)}!`, 
+                    'warning'
+                );
+            }
+        }
+        
+        // Função para salvar no Firebase
+        function salvarNoFirebase(emprestimo) {
+            submitBtn.innerHTML = '<div class="loading"></div> Salvando...';
+            submitBtn.disabled = true;
+            
+            database.ref('emprestimos/' + emprestimo.id).set(emprestimo)
+                .then(() => {
+                    submitBtn.textContent = '🧮 Calcular e Adicionar';
+                    submitBtn.disabled = false;
+                })
+                .catch((error) => {
+                    console.error('Erro ao salvar no Firebase:', error);
+                    submitBtn.textContent = '🧮 Calcular e Adicionar';
+                    submitBtn.disabled = false;
+                    mostrarNotificacao('Erro ao salvar no Firebase', 'error');
+                });
+        }
+        
+        // Função para carregar dados do Firebase
+        function carregarDoFirebase() {
+            database.ref('emprestimos').on('value', (snapshot) => {
+                const data = snapshot.val();
+                emprestimos = [];
+                
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        emprestimos.push(data[key]);
+                    });
+                }
+                
+                atualizarDashboard();
+                renderizarTabela();
+                verificarVencimentosProximos();
+            });
+        }
+        
+        // Função para atualizar empréstimo no Firebase
+        function atualizarNoFirebase(emprestimo) {
+            database.ref('emprestimos/' + emprestimo.id).set(emprestimo)
+                .catch((error) => {
+                    console.error('Erro ao atualizar no Firebase:', error);
+                    mostrarNotificacao('Erro ao atualizar dados', 'error');
+                });
+        }
+        
+        // Função para excluir empréstimo do Firebase
+        function excluirDoFirebase(id) {
+            database.ref('emprestimos/' + id).remove()
+                .catch((error) => {
+                    console.error('Erro ao excluir do Firebase:', error);
+                    mostrarNotificacao('Erro ao excluir registro', 'error');
+                });
+        }
+        
+        // Função para calcular juros recebidos
+        function calcularJurosRecebidos() {
+            const agora = new Date();
+            const mesAtual = agora.getMonth();
+            const anoAtual = agora.getFullYear();
+            
+            let totalJurosMensal = 0;
+            let totalJurosAnual = 0;
+            
+            emprestimos.forEach(emprestimo => {
+                if (emprestimo.historicoJuros && emprestimo.historicoJuros.length > 0) {
+                    emprestimo.historicoJuros.forEach(juros => {
+                        const dataJuros = new Date(juros.data);
+                        
+                        // Juros mensal (mês atual)
+                        if (dataJuros.getMonth() === mesAtual && dataJuros.getFullYear() === anoAtual) {
+                            if (juros.valorPago) {
+                                totalJurosMensal += juros.valorPago;
+                            }
+                        }
+                        
+                        // Juros anual (ano atual)
+                        if (dataJuros.getFullYear() === anoAtual) {
+                            if (juros.valorPago) {
+                                totalJurosAnual += juros.valorPago;
+                            }
+                        }
+                    });
+                }
+                
+                // Se o empréstimo foi pago totalmente, adicionar os juros totais
+                if (emprestimo.status === 'pago') {
+                    const dataPagamento = new Date(emprestimo.dataPagamento || emprestimo.dataCriacao);
+                    const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
+                    
+                    // Verificar se o pagamento foi neste mês
+                    if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
+                        totalJurosMensal += jurosTotais;
+                    }
+                    
+                    // Verificar se o pagamento foi neste ano
+                    if (dataPagamento.getFullYear() === anoAtual) {
+                        totalJurosAnual += jurosTotais;
+                    }
+                }
+            });
+            
+            jurosMensal.textContent = formatarMoeda(totalJurosMensal);
+            jurosAnual.textContent = formatarMoeda(totalJurosAnual);
+        }
+        
+        // Função para atualizar o dashboard
+        function atualizarDashboard() {
+            // Total de empréstimos
+            totalEmprestimos.textContent = emprestimos.length;
+            
+            // Valor total emprestado
+            const totalValor = emprestimos.reduce((acc, emp) => acc + emp.valorOriginal, 0);
+            valorTotalEmprestado.textContent = formatarMoeda(totalValor);
+            
+            // Total de pendentes
+            const pendentes = emprestimos.filter(emp => emp.status === 'pendente').length;
+            totalPendentes.textContent = pendentes;
+            
+            // Vencimentos que são hoje
+            const hoje = new Date().toISOString().split('T')[0];
+            const vencemHoje = emprestimos.filter(emp => 
+                emp.dataVencimento === hoje && emp.status === 'pendente'
+            ).length;
+            vencimentosHoje.textContent = vencemHoje;
+            
+            // Calcular juros recebidos
+            calcularJurosRecebidos();
+        }
+        
+        // Função para renderizar a tabela
+        function renderizarTabela() {
+            // Ordenar empréstimos por data de vencimento (mais próximos primeiro)
+            const emprestimosOrdenados = [...emprestimos].sort((a, b) => {
+                return new Date(a.dataVencimento) - new Date(b.dataVencimento);
+            });
+            
+            // Limpar tabela
+            loansTableBody.innerHTML = '';
+            
+            // Adicionar empréstimos à tabela
+            emprestimosOrdenados.forEach(emprestimo => {
+                const tr = document.createElement('tr');
+                
+                // Aplicar estilo baseado no status e vencimento
+                if (emprestimo.status === 'pago') {
+                    tr.style.backgroundColor = 'rgba(3, 166, 120, 0.1)';
+                } else if (venceHoje(emprestimo.dataVencimento)) {
+                    tr.className = 'vencimento-hoje';
+                } else if (dataProxima(emprestimo.dataVencimento)) {
+                    tr.className = 'vencimento-proximo';
+                }
+                
+                tr.innerHTML = `
+                    <td>${emprestimo.nome}</td>
+                    <td>${formatarData(emprestimo.dataEmprestimo)}</td>
+                    <td>${formatarMoeda(emprestimo.valorOriginal)}</td>
+                    <td>${formatarMoeda(emprestimo.valorAtual)}</td>
+                    <td>${formatarData(emprestimo.dataVencimento)}</td>
+                    <td class="${emprestimo.status === 'pago' ? 'status-pago' : 
+                                 venceHoje(emprestimo.dataVencimento) ? 'status-pendente' : 
+                                 dataProxima(emprestimo.dataVencimento) ? 'status-atencao' : 'status-pendente'}">
+                        ${emprestimo.status === 'pago' ? 'PAGO' : 
+                          venceHoje(emprestimo.dataVencimento) ? 'VENCE HOJE!' : 
+                          dataProxima(emprestimo.dataVencimento) ? 'VENCIMENTO PRÓXIMO' : 'PENDENTE'}
+                    </td>
+                    <td class="actions">
+                        ${emprestimo.status === 'pendente' ? 
+                            `<button class="btn-success btn-small" onclick="marcarComoPago(${emprestimo.id})">✅ PAGO</button>
+                             <button class="btn-warning btn-small" onclick="pagarJuros(${emprestimo.id})">💰 JUROS</button>
+                             <button class="btn-danger btn-small" onclick="naoPago(${emprestimo.id})">❌ NÃO PAGO</button>` : 
+                            `<button class="btn-danger btn-small" onclick="reabrirEmprestimo(${emprestimo.id})">↩️ REABRIR</button>`
+                        }
+                        <button class="btn-danger btn-small" onclick="excluirEmprestimo(${emprestimo.id})">🗑️ EXCLUIR</button>
+                    </td>
+                `;
+                
+                loansTableBody.appendChild(tr);
+            });
+        }
+        
+        // Função para marcar empréstimo como pago
+        function marcarComoPago(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                // Calcular juros totais recebidos
+                const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
+                
+                // Registrar pagamento total no histórico
+                const pagamentoTotal = {
+                    data: new Date().toISOString(),
+                    valorPago: jurosTotais,
+                    tipo: 'pagamento_total'
+                };
+                
+                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+                emprestimo.historicoJuros.push(pagamentoTotal);
+                
+                // Marcar como pago e registrar data do pagamento
+                emprestimo.status = 'pago';
+                emprestimo.dataPagamento = new Date().toISOString();
+                
+                atualizarNoFirebase(emprestimo);
+                atualizarDashboard();
+                renderizarTabela();
+                mostrarNotificacao('Empréstimo marcado como PAGO. Juros contabilizados.');
+            }
+        }
+        
+        // Função para pagar apenas os juros
+        function pagarJuros(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                // Calcular valor dos juros
+                const valorJuros = emprestimo.valorAtual - emprestimo.valorOriginal;
+                
+                // Registrar pagamento de juros no histórico
+                const jurosPagamento = {
+                    data: new Date().toISOString(),
+                    valorJuros: valorJuros,
+                    valorPago: valorJuros,
+                    tipo: 'juros'
+                };
+                
+                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+                emprestimo.historicoJuros.push(jurosPagamento);
+                
+                // Calcular próximo vencimento (próximo mês)
+                const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+                dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+                emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+                
+                // Aplicar juros novamente para o próximo mês
+                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+                emprestimo.valorAtual = emprestimo.valorOriginal + juros;
+                
+                atualizarNoFirebase(emprestimo);
+                atualizarDashboard();
+                renderizarTabela();
+                mostrarNotificacao('Juros pagos. Novo vencimento: ' + formatarData(emprestimo.dataVencimento));
+            }
+        }
+        
+        // Função para marcar como não pago (aplica juros)
+        function naoPago(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                // Calcular próximo vencimento (próximo mês)
+                const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+                dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+                emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+                
+                // Aplicar juros sobre o valor atual
+                const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+                emprestimo.valorAtual += juros;
+                
+                // Registrar no histórico
+                const naoPagamento = {
+                    data: new Date().toISOString(),
+                    motivo: 'Não pagamento',
+                    jurosAplicados: juros,
+                    tipo: 'multa'
+                };
+                
+                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+                emprestimo.historicoJuros.push(naoPagamento);
+                
+                atualizarNoFirebase(emprestimo);
+                atualizarDashboard();
+                renderizarTabela();
+                mostrarNotificacao('Juros aplicados. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
+            }
+        }
+        
+        // Função para reabrir empréstimo
+        function reabrirEmprestimo(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                emprestimo.status = 'pendente';
+                delete emprestimo.dataPagamento;
+                atualizarNoFirebase(emprestimo);
+                atualizarDashboard();
+                renderizarTabela();
+                mostrarNotificacao('Empréstimo reaberto');
+            }
+        }
+        
+        // Função para excluir empréstimo
+        function excluirEmprestimo(id) {
+            if (confirm('Tem certeza que deseja excluir este empréstimo? Esta ação não pode ser desfeita.')) {
+                const index = emprestimos.findIndex(emp => emp.id === id);
+                if (index !== -1) {
+                    const nome = emprestimos[index].nome;
+                    emprestimos.splice(index, 1);
+                    excluirDoFirebase(id);
+                    atualizarDashboard();
+                    renderizarTabela();
+                    mostrarNotificacao(`Empréstimo de ${nome} excluído com sucesso`);
+                }
+            }
+        }
+        
+        // Função para verificar vencimentos próximos e enviar notificações
+        function verificarVencimentosProximos() {
+            emprestimos.forEach(emprestimo => {
+                if (emprestimo.status === 'pendente' && dataProxima(emprestimo.dataVencimento)) {
+                    // Mostrar notificação para o controlador do sistema
+                    mostrarNotificacao(
+                        `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
+                        'warning'
+                    );
+                }
+            });
+        }
+        
+        // Event listener para o formulário
+        loanForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nome').value;
+            const dataEmprestimo = document.getElementById('dataEmprestimo').value;
+            const valorEmprestimo = parseFloat(document.getElementById('valorEmprestimo').value);
+            const dataVencimento = document.getElementById('dataVencimento').value;
+            const porcentagem = parseFloat(document.getElementById('porcentagem').value);
+            
+            // Calcular valor total
+            const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
+            
+            // Mostrar valor total
+            valorTotalDiv.textContent = `Valor Total com ${porcentagem}%: ${formatarMoeda(valorTotal)}`;
+            valorTotalDiv.classList.remove('hidden');
+            
+            // Adicionar empréstimo
+            adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem);
+            
+            // Limpar formulário (exceto porcentagem)
+            document.getElementById('nome').value = '';
+            document.getElementById('valorEmprestimo').value = '';
+            
+            // Manter a data atual para novo empréstimo
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataEmprestimo').value = hoje;
+            
+            // Definir vencimento para 30 dias a partir de hoje
+            const vencimento = new Date();
+            vencimento.setDate(vencimento.getDate() + 30);
+            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+        });
+        
+        // Inicializar a aplicação
+        function inicializar() {
+            // Definir data atual como padrão para o campo de data
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataEmprestimo').value = hoje;
+            
+            // Definir vencimento para 30 dias a partir de hoje
+            const vencimento = new Date();
+            vencimento.setDate(vencimento.getDate() + 30);
+            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+            
+            // Carregar dados do Firebase
+            carregarDoFirebase();
+            
+            // Verificar vencimentos a cada hora
+            setInterval(verificarVencimentosProximos, 60 * 60 * 1000);
+        }
+        
+        // Chamar função de inicialização quando a página carregar
+        document.addEventListener('DOMContentLoaded', inicializar);
+        
+        // Tornar funções disponíveis globalmente
+        window.marcarComoPago = marcarComoPago;
+        window.pagarJuros = pagarJuros;
+        window.naoPago = naoPago;
+        window.reabrirEmprestimo = reabrirEmprestimo;
+        window.excluirEmprestimo = excluirEmprestimo;
+    </script>
+</body>
+</html>
