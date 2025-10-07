@@ -162,6 +162,15 @@
             box-shadow: 0 6px 15px rgba(115, 23, 2, 0.4);
         }
         
+        .btn-info {
+            background: linear-gradient(135deg, var(--medium-green) 0%, var(--dark-green) 100%);
+            box-shadow: 0 4px 10px rgba(2, 115, 94, 0.3);
+        }
+        
+        .btn-info:hover {
+            box-shadow: 0 6px 15px rgba(2, 115, 94, 0.4);
+        }
+        
         .btn-small {
             padding: 10px 15px;
             font-size: 14px;
@@ -207,84 +216,105 @@
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
         }
         
-        .table-container {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(1, 64, 64, 0.2);
+        .loans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 700px;
+        .loan-card {
             background: white;
             border-radius: 12px;
-            overflow: hidden;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(1, 64, 64, 0.2);
+            border: 1px solid var(--light-green);
+            transition: all 0.3s ease;
         }
         
-        th {
-            background: linear-gradient(135deg, var(--dark-green) 0%, var(--medium-green) 100%);
-            color: white;
-            padding: 15px 12px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.9rem;
+        .loan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(1, 64, 64, 0.3);
         }
         
-        td {
-            padding: 12px 10px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-            font-size: 0.85rem;
-            color: var(--dark-green);
+        .loan-card.pago {
+            background: linear-gradient(135deg, rgba(3, 166, 120, 0.1) 0%, rgba(2, 115, 94, 0.1) 100%);
         }
         
-        tr:hover {
-            background-color: rgba(3, 166, 120, 0.1);
-        }
-        
-        .status-pago {
-            color: var(--light-green);
-            font-weight: bold;
-            background: rgba(3, 166, 120, 0.1);
-            padding: 5px 10px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-        
-        .status-pendente {
-            color: var(--dark-red);
-            font-weight: bold;
-            background: rgba(115, 23, 2, 0.1);
-            padding: 5px 10px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-        
-        .status-atencao {
-            color: var(--orange);
-            font-weight: bold;
-            background: rgba(242, 116, 5, 0.1);
-            padding: 5px 10px;
-            border-radius: 20px;
-            display: inline-block;
-        }
-        
-        .vencimento-proximo {
-            background-color: rgba(242, 116, 5, 0.1) !important;
+        .loan-card.vencimento-proximo {
+            background: linear-gradient(135deg, rgba(242, 116, 5, 0.1) 0%, rgba(230, 92, 0, 0.1) 100%);
             border-left: 4px solid var(--orange);
         }
         
-        .vencimento-hoje {
-            background-color: rgba(115, 23, 2, 0.1) !important;
+        .loan-card.vencimento-hoje {
+            background: linear-gradient(135deg, rgba(115, 23, 2, 0.1) 0%, rgba(138, 28, 2, 0.1) 100%);
             border-left: 4px solid var(--dark-red);
         }
         
-        .actions {
+        .loan-header {
             display: flex;
-            gap: 5px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-green);
+        }
+        
+        .loan-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--dark-green);
+        }
+        
+        .loan-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-pago {
+            background: var(--light-green);
+            color: white;
+        }
+        
+        .status-pendente {
+            background: var(--dark-red);
+            color: white;
+        }
+        
+        .status-atencao {
+            background: var(--orange);
+            color: white;
+        }
+        
+        .loan-details {
+            margin-bottom: 15px;
+        }
+        
+        .loan-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(3, 166, 120, 0.2);
+        }
+        
+        .loan-detail-label {
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+        
+        .loan-detail-value {
+            color: var(--medium-green);
+            font-weight: 500;
+        }
+        
+        .loan-actions {
+            display: flex;
             flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
         }
         
         .hidden {
@@ -372,6 +402,90 @@
             margin-top: 15px;
         }
         
+        /* Modal de Comprovante */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--dark-red);
+            font-weight: bold;
+        }
+        
+        .comprovante {
+            text-align: center;
+            border: 2px dashed var(--orange);
+            padding: 20px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.9) 100%);
+        }
+        
+        .comprovante h3 {
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+        
+        .comprovante-detalhes {
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .comprovante-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(3, 166, 120, 0.2);
+        }
+        
+        .comprovante-label {
+            font-weight: 600;
+            color: var(--dark-green);
+        }
+        
+        .comprovante-valor {
+            color: var(--medium-green);
+            font-weight: 500;
+        }
+        
+        .btn-print {
+            background: linear-gradient(135deg, var(--orange) 0%, var(--dark-red) 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            width: auto;
+        }
+        
         /* Melhorias para mobile */
         @media (max-width: 768px) {
             .container {
@@ -409,26 +523,21 @@
                 font-size: 1.3rem;
             }
             
+            .loans-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .juros-grid {
                 grid-template-columns: 1fr;
             }
             
-            .actions {
+            .loan-actions {
                 flex-direction: column;
             }
             
             .btn-small {
                 width: 100%;
                 margin: 3px 0;
-            }
-            
-            table {
-                font-size: 0.8rem;
-                min-width: 650px;
-            }
-            
-            th, td {
-                padding: 10px 8px;
             }
         }
         
@@ -460,17 +569,9 @@
             button {
                 padding: 16px;
             }
-        }
-        
-        /* Melhorias para tabela em mobile */
-        @media (max-width: 600px) {
-            .table-container {
-                border-radius: 10px;
-                box-shadow: 0 4px 12px rgba(1, 64, 64, 0.2);
-            }
             
-            table {
-                min-width: 100%;
+            .modal-content {
+                padding: 20px;
             }
         }
         
@@ -578,26 +679,21 @@
         </section>
         
         <section class="card">
-            <h2>📋 Empréstimos Pendentes</h2>
-            <div class="table-container">
-                <table id="loansTable">
-                    <thead>
-                        <tr>
-                            <th>👤 Nome</th>
-                            <th>📅 Data</th>
-                            <th>💰 Valor</th>
-                            <th>💸 Valor Atual</th>
-                            <th>⏰ Vencimento</th>
-                            <th>📈 Status</th>
-                            <th>⚡ Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="loansTableBody">
-                        <!-- Dados serão inseridos via JavaScript -->
-                    </tbody>
-                </table>
+            <h2>📋 Empréstimos Registrados</h2>
+            <div class="loans-grid" id="loansGrid">
+                <!-- Cards de empréstimos serão inseridos aqui via JavaScript -->
             </div>
         </section>
+    </div>
+
+    <!-- Modal de Comprovante -->
+    <div id="comprovanteModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="comprovante" id="comprovanteContent">
+                <!-- Conteúdo do comprovante será inserido aqui -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -622,7 +718,7 @@
         // Elementos do DOM
         const loanForm = document.getElementById('loanForm');
         const valorTotalDiv = document.getElementById('valorTotal');
-        const loansTableBody = document.getElementById('loansTableBody');
+        const loansGrid = document.getElementById('loansGrid');
         const totalEmprestimos = document.getElementById('totalEmprestimos');
         const valorTotalEmprestado = document.getElementById('valorTotalEmprestado');
         const totalPendentes = document.getElementById('totalPendentes');
@@ -630,6 +726,13 @@
         const jurosMensal = document.getElementById('jurosMensal');
         const jurosAnual = document.getElementById('jurosAnual');
         const submitBtn = document.getElementById('submitBtn');
+        const comprovanteModal = document.getElementById('comprovanteModal');
+        const comprovanteContent = document.getElementById('comprovanteContent');
+        const closeModal = document.getElementById('closeModal');
+        
+        // Variável para controlar duplicação
+        let isAdding = false;
+        let lastAddedId = null;
         
         // Função para mostrar notificação
         function mostrarNotificacao(mensagem, tipo = 'success') {
@@ -651,8 +754,7 @@
         
         // Função para formatar data
         function formatarData(data) {
-            // Corrigir problema do fuso horário - usar a data exata fornecida
-            const dataObj = new Date(data + 'T00:00:00'); // Força o uso da data exata
+            const dataObj = new Date(data + 'T00:00:00');
             return dataObj.toLocaleDateString('pt-BR');
         }
         
@@ -667,7 +769,7 @@
         // Função para verificar se a data está próxima (3 dias)
         function dataProxima(dataVencimento) {
             const hoje = new Date();
-            const vencimento = new Date(dataVencimento + 'T00:00:00'); // Corrige fuso horário
+            const vencimento = new Date(dataVencimento + 'T00:00:00');
             const diferenca = vencimento - hoje;
             const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
             
@@ -677,48 +779,39 @@
         // Função para verificar se a data é hoje
         function venceHoje(dataVencimento) {
             const hoje = new Date();
-            const vencimento = new Date(dataVencimento + 'T00:00:00'); // Corrige fuso horário
+            const vencimento = new Date(dataVencimento + 'T00:00:00');
             
             return hoje.toDateString() === vencimento.toDateString();
         }
         
         // Função para adicionar um novo empréstimo
         function adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem) {
+            if (isAdding) {
+                mostrarNotificacao('Aguarde, empréstimo sendo processado...', 'warning');
+                return;
+            }
+            
+            isAdding = true;
+            const emprestimoId = Date.now();
+            lastAddedId = emprestimoId;
+            
             const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
             
             const emprestimo = {
-                id: Date.now(), // ID único baseado no timestamp
+                id: emprestimoId,
                 nome,
-                dataEmprestimo: dataEmprestimo, // Usa a data exata fornecida
+                dataEmprestimo: dataEmprestimo,
                 valorOriginal: valorEmprestimo,
                 valorAtual: valorTotal,
-                dataVencimento: dataVencimento, // Usa a data exata fornecida
+                dataVencimento: dataVencimento,
                 porcentagem,
-                status: 'pendente', // pendente ou pago
+                status: 'pendente',
                 historicoJuros: [],
                 dataCriacao: new Date().toISOString()
             };
             
             // Salvar no Firebase
             salvarNoFirebase(emprestimo);
-            
-            // Adicionar ao array local
-            emprestimos.push(emprestimo);
-            
-            // Atualizar interface
-            atualizarDashboard();
-            renderizarTabela();
-            
-            // Mostrar notificação para o controlador do sistema
-            mostrarNotificacao('Empréstimo cadastrado com sucesso!');
-            
-            // Verificar se é um vencimento próximo para alertar o controlador
-            if (dataProxima(dataVencimento)) {
-                mostrarNotificacao(
-                    `Atenção: Empréstimo de ${nome} vence em ${formatarData(dataVencimento)}!`, 
-                    'warning'
-                );
-            }
         }
         
         // Função para salvar no Firebase
@@ -730,13 +823,120 @@
                 .then(() => {
                     submitBtn.textContent = '🧮 Calcular e Adicionar';
                     submitBtn.disabled = false;
+                    isAdding = false;
+                    
+                    // O Firebase já vai atualizar automaticamente via listener
+                    // Não adicionamos manualmente ao array para evitar duplicação
+                    
+                    // Mostrar comprovante
+                    mostrarComprovante(emprestimo);
+                    
+                    // Mostrar notificação
+                    mostrarNotificacao('Empréstimo cadastrado com sucesso!');
+                    
+                    // Limpar formulário
+                    limparFormulario();
+                    
+                    // Verificar se é um vencimento próximo
+                    if (dataProxima(emprestimo.dataVencimento)) {
+                        mostrarNotificacao(
+                            `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
+                            'warning'
+                        );
+                    }
                 })
                 .catch((error) => {
                     console.error('Erro ao salvar no Firebase:', error);
                     submitBtn.textContent = '🧮 Calcular e Adicionar';
                     submitBtn.disabled = false;
+                    isAdding = false;
                     mostrarNotificacao('Erro ao salvar no Firebase', 'error');
                 });
+        }
+        
+        // Função para limpar formulário
+        function limparFormulario() {
+            document.getElementById('nome').value = '';
+            document.getElementById('valorEmprestimo').value = '';
+            valorTotalDiv.classList.add('hidden');
+            
+            // Manter datas padrão
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dataEmprestimo').value = hoje;
+            
+            const vencimento = new Date();
+            vencimento.setDate(vencimento.getDate() + 30);
+            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+        }
+        
+        // Função para mostrar comprovante
+        function mostrarComprovante(emprestimo) {
+            const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
+            
+            comprovanteContent.innerHTML = `
+                <h3>📄 COMPROVANTE DE EMPRÉSTIMO</h3>
+                <div class="comprovante-detalhes">
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Nome:</span>
+                        <span class="comprovante-valor">${emprestimo.nome}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Data do Empréstimo:</span>
+                        <span class="comprovante-valor">${formatarData(emprestimo.dataEmprestimo)}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Valor do Empréstimo:</span>
+                        <span class="comprovante-valor">${formatarMoeda(emprestimo.valorOriginal)}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Juros (${emprestimo.porcentagem}%):</span>
+                        <span class="comprovante-valor">${formatarMoeda(juros)}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Valor Total:</span>
+                        <span class="comprovante-valor" style="font-weight: bold; color: var(--dark-green);">${formatarMoeda(emprestimo.valorAtual)}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">Data de Vencimento:</span>
+                        <span class="comprovante-valor">${formatarData(emprestimo.dataVencimento)}</span>
+                    </div>
+                    <div class="comprovante-item">
+                        <span class="comprovante-label">ID do Empréstimo:</span>
+                        <span class="comprovante-valor">#${emprestimo.id}</span>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; font-style: italic; color: var(--gray);">
+                    Guarde este comprovante para referência futura.
+                </p>
+                <button class="btn-print" onclick="imprimirComprovante()">🖨️ Imprimir Comprovante</button>
+            `;
+            
+            comprovanteModal.style.display = 'flex';
+        }
+        
+        // Função para imprimir comprovante
+        function imprimirComprovante() {
+            const comprovante = comprovanteContent.innerHTML;
+            const janelaImpressao = window.open('', '_blank');
+            janelaImpressao.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Comprovante de Empréstimo</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .comprovante { border: 2px dashed #333; padding: 20px; }
+                        .comprovante-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                        .comprovante-label { font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    ${comprovante}
+                </body>
+                </html>
+            `);
+            janelaImpressao.document.close();
+            janelaImpressao.print();
         }
         
         // Função para carregar dados do Firebase
@@ -751,8 +951,11 @@
                     });
                 }
                 
+                // Ordenar por data de criação (mais recentes primeiro)
+                emprestimos.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+                
                 atualizarDashboard();
-                renderizarTabela();
+                renderizarCards();
                 verificarVencimentosProximos();
             });
         }
@@ -789,14 +992,12 @@
                     emprestimo.historicoJuros.forEach(juros => {
                         const dataJuros = new Date(juros.data);
                         
-                        // Juros mensal (mês atual)
                         if (dataJuros.getMonth() === mesAtual && dataJuros.getFullYear() === anoAtual) {
                             if (juros.valorPago) {
                                 totalJurosMensal += juros.valorPago;
                             }
                         }
                         
-                        // Juros anual (ano atual)
                         if (dataJuros.getFullYear() === anoAtual) {
                             if (juros.valorPago) {
                                 totalJurosAnual += juros.valorPago;
@@ -805,17 +1006,14 @@
                     });
                 }
                 
-                // Se o empréstimo foi pago totalmente, adicionar os juros totais
                 if (emprestimo.status === 'pago') {
                     const dataPagamento = new Date(emprestimo.dataPagamento || emprestimo.dataCriacao);
                     const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
                     
-                    // Verificar se o pagamento foi neste mês
                     if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
                         totalJurosMensal += jurosTotais;
                     }
                     
-                    // Verificar se o pagamento foi neste ano
                     if (dataPagamento.getFullYear() === anoAtual) {
                         totalJurosAnual += jurosTotais;
                     }
@@ -828,87 +1026,105 @@
         
         // Função para atualizar o dashboard
         function atualizarDashboard() {
-            // Total de empréstimos
             totalEmprestimos.textContent = emprestimos.length;
             
-            // Valor total emprestado
             const totalValor = emprestimos.reduce((acc, emp) => acc + emp.valorOriginal, 0);
             valorTotalEmprestado.textContent = formatarMoeda(totalValor);
             
-            // Total de pendentes
             const pendentes = emprestimos.filter(emp => emp.status === 'pendente').length;
             totalPendentes.textContent = pendentes;
             
-            // Vencimentos que são hoje
             const hoje = new Date().toISOString().split('T')[0];
             const vencemHoje = emprestimos.filter(emp => 
                 emp.dataVencimento === hoje && emp.status === 'pendente'
             ).length;
             vencimentosHoje.textContent = vencemHoje;
             
-            // Calcular juros recebidos
             calcularJurosRecebidos();
         }
         
-        // Função para renderizar a tabela
-        function renderizarTabela() {
-            // Ordenar empréstimos por data de vencimento (mais próximos primeiro)
-            const emprestimosOrdenados = [...emprestimos].sort((a, b) => {
-                return new Date(a.dataVencimento) - new Date(b.dataVencimento);
-            });
+        // Função para renderizar os cards
+        function renderizarCards() {
+            // Limpar grid
+            loansGrid.innerHTML = '';
             
-            // Limpar tabela
-            loansTableBody.innerHTML = '';
-            
-            // Adicionar empréstimos à tabela
-            emprestimosOrdenados.forEach(emprestimo => {
-                const tr = document.createElement('tr');
+            // Adicionar cards
+            emprestimos.forEach(emprestimo => {
+                const card = document.createElement('div');
+                card.className = 'loan-card';
                 
-                // Aplicar estilo baseado no status e vencimento
+                // Definir classe baseada no status
                 if (emprestimo.status === 'pago') {
-                    tr.style.backgroundColor = 'rgba(3, 166, 120, 0.1)';
+                    card.classList.add('pago');
                 } else if (venceHoje(emprestimo.dataVencimento)) {
-                    tr.className = 'vencimento-hoje';
+                    card.classList.add('vencimento-hoje');
                 } else if (dataProxima(emprestimo.dataVencimento)) {
-                    tr.className = 'vencimento-proximo';
+                    card.classList.add('vencimento-proximo');
                 }
                 
-                tr.innerHTML = `
-                    <td>${emprestimo.nome}</td>
-                    <td>${formatarData(emprestimo.dataEmprestimo)}</td>
-                    <td>${formatarMoeda(emprestimo.valorOriginal)}</td>
-                    <td>${formatarMoeda(emprestimo.valorAtual)}</td>
-                    <td>${formatarData(emprestimo.dataVencimento)}</td>
-                    <td class="${emprestimo.status === 'pago' ? 'status-pago' : 
+                const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
+                
+                card.innerHTML = `
+                    <div class="loan-header">
+                        <div class="loan-name">${emprestimo.nome}</div>
+                        <div class="loan-status ${emprestimo.status === 'pago' ? 'status-pago' : 
                                  venceHoje(emprestimo.dataVencimento) ? 'status-pendente' : 
                                  dataProxima(emprestimo.dataVencimento) ? 'status-atencao' : 'status-pendente'}">
-                        ${emprestimo.status === 'pago' ? 'PAGO' : 
-                          venceHoje(emprestimo.dataVencimento) ? 'VENCE HOJE!' : 
-                          dataProxima(emprestimo.dataVencimento) ? 'VENCIMENTO PRÓXIMO' : 'PENDENTE'}
-                    </td>
-                    <td class="actions">
+                            ${emprestimo.status === 'pago' ? 'PAGO' : 
+                              venceHoje(emprestimo.dataVencimento) ? 'VENCE HOJE!' : 
+                              dataProxima(emprestimo.dataVencimento) ? 'ATENÇÃO' : 'PENDENTE'}
+                        </div>
+                    </div>
+                    
+                    <div class="loan-details">
+                        <div class="loan-detail">
+                            <span class="loan-detail-label">Valor Original:</span>
+                            <span class="loan-detail-value">${formatarMoeda(emprestimo.valorOriginal)}</span>
+                        </div>
+                        <div class="loan-detail">
+                            <span class="loan-detail-label">Valor Atual:</span>
+                            <span class="loan-detail-value">${formatarMoeda(emprestimo.valorAtual)}</span>
+                        </div>
+                        <div class="loan-detail">
+                            <span class="loan-detail-label">Juros:</span>
+                            <span class="loan-detail-value">${formatarMoeda(juros)}</span>
+                        </div>
+                        <div class="loan-detail">
+                            <span class="loan-detail-label">Vencimento:</span>
+                            <span class="loan-detail-value">${formatarData(emprestimo.dataVencimento)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="loan-actions">
                         ${emprestimo.status === 'pendente' ? 
                             `<button class="btn-success btn-small" onclick="marcarComoPago(${emprestimo.id})">✅ PAGO</button>
                              <button class="btn-warning btn-small" onclick="pagarJuros(${emprestimo.id})">💰 JUROS</button>
                              <button class="btn-danger btn-small" onclick="naoPago(${emprestimo.id})">❌ NÃO PAGO</button>` : 
                             `<button class="btn-danger btn-small" onclick="reabrirEmprestimo(${emprestimo.id})">↩️ REABRIR</button>`
                         }
+                        <button class="btn-info btn-small" onclick="verDetalhes(${emprestimo.id})">📋 DETALHES</button>
                         <button class="btn-danger btn-small" onclick="excluirEmprestimo(${emprestimo.id})">🗑️ EXCLUIR</button>
-                    </td>
+                    </div>
                 `;
                 
-                loansTableBody.appendChild(tr);
+                loansGrid.appendChild(card);
             });
+        }
+        
+        // Função para ver detalhes
+        function verDetalhes(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                mostrarComprovante(emprestimo);
+            }
         }
         
         // Função para marcar empréstimo como pago
         function marcarComoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // Calcular juros totais recebidos
                 const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
-                // Registrar pagamento total no histórico
                 const pagamentoTotal = {
                     data: new Date().toISOString(),
                     valorPago: jurosTotais,
@@ -918,13 +1134,10 @@
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
                 emprestimo.historicoJuros.push(pagamentoTotal);
                 
-                // Marcar como pago e registrar data do pagamento
                 emprestimo.status = 'pago';
                 emprestimo.dataPagamento = new Date().toISOString();
                 
                 atualizarNoFirebase(emprestimo);
-                atualizarDashboard();
-                renderizarTabela();
                 mostrarNotificacao('Empréstimo marcado como PAGO. Juros contabilizados.');
             }
         }
@@ -933,10 +1146,8 @@
         function pagarJuros(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // Calcular valor dos juros
                 const valorJuros = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
-                // Registrar pagamento de juros no histórico
                 const jurosPagamento = {
                     data: new Date().toISOString(),
                     valorJuros: valorJuros,
@@ -947,18 +1158,14 @@
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
                 emprestimo.historicoJuros.push(jurosPagamento);
                 
-                // Calcular próximo vencimento (próximo mês)
                 const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                // Aplicar juros novamente para o próximo mês
                 const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 emprestimo.valorAtual = emprestimo.valorOriginal + juros;
                 
                 atualizarNoFirebase(emprestimo);
-                atualizarDashboard();
-                renderizarTabela();
                 mostrarNotificacao('Juros pagos. Novo vencimento: ' + formatarData(emprestimo.dataVencimento));
             }
         }
@@ -967,16 +1174,13 @@
         function naoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // Calcular próximo vencimento (próximo mês)
                 const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                // Aplicar juros sobre o valor atual
                 const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
                 emprestimo.valorAtual += juros;
                 
-                // Registrar no histórico
                 const naoPagamento = {
                     data: new Date().toISOString(),
                     motivo: 'Não pagamento',
@@ -988,8 +1192,6 @@
                 emprestimo.historicoJuros.push(naoPagamento);
                 
                 atualizarNoFirebase(emprestimo);
-                atualizarDashboard();
-                renderizarTabela();
                 mostrarNotificacao('Juros aplicados. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
             }
         }
@@ -1001,8 +1203,6 @@
                 emprestimo.status = 'pendente';
                 delete emprestimo.dataPagamento;
                 atualizarNoFirebase(emprestimo);
-                atualizarDashboard();
-                renderizarTabela();
                 mostrarNotificacao('Empréstimo reaberto');
             }
         }
@@ -1013,20 +1213,16 @@
                 const index = emprestimos.findIndex(emp => emp.id === id);
                 if (index !== -1) {
                     const nome = emprestimos[index].nome;
-                    emprestimos.splice(index, 1);
                     excluirDoFirebase(id);
-                    atualizarDashboard();
-                    renderizarTabela();
                     mostrarNotificacao(`Empréstimo de ${nome} excluído com sucesso`);
                 }
             }
         }
         
-        // Função para verificar vencimentos próximos e enviar notificações
+        // Função para verificar vencimentos próximos
         function verificarVencimentosProximos() {
             emprestimos.forEach(emprestimo => {
                 if (emprestimo.status === 'pendente' && dataProxima(emprestimo.dataVencimento)) {
-                    // Mostrar notificação para o controlador do sistema
                     mostrarNotificacao(
                         `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
                         'warning'
@@ -1045,45 +1241,37 @@
             const dataVencimento = document.getElementById('dataVencimento').value;
             const porcentagem = parseFloat(document.getElementById('porcentagem').value);
             
-            // Calcular valor total
             const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
             
-            // Mostrar valor total
             valorTotalDiv.textContent = `Valor Total com ${porcentagem}%: ${formatarMoeda(valorTotal)}`;
             valorTotalDiv.classList.remove('hidden');
             
-            // Adicionar empréstimo
             adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem);
-            
-            // Limpar formulário (exceto porcentagem)
-            document.getElementById('nome').value = '';
-            document.getElementById('valorEmprestimo').value = '';
-            
-            // Manter a data atual para novo empréstimo
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('dataEmprestimo').value = hoje;
-            
-            // Definir vencimento para 30 dias a partir de hoje
-            const vencimento = new Date();
-            vencimento.setDate(vencimento.getDate() + 30);
-            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+        });
+        
+        // Fechar modal
+        closeModal.addEventListener('click', function() {
+            comprovanteModal.style.display = 'none';
+        });
+        
+        // Fechar modal clicando fora
+        window.addEventListener('click', function(e) {
+            if (e.target === comprovanteModal) {
+                comprovanteModal.style.display = 'none';
+            }
         });
         
         // Inicializar a aplicação
         function inicializar() {
-            // Definir data atual como padrão para o campo de data
             const hoje = new Date().toISOString().split('T')[0];
             document.getElementById('dataEmprestimo').value = hoje;
             
-            // Definir vencimento para 30 dias a partir de hoje
             const vencimento = new Date();
             vencimento.setDate(vencimento.getDate() + 30);
             document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
             
-            // Carregar dados do Firebase
             carregarDoFirebase();
             
-            // Verificar vencimentos a cada hora
             setInterval(verificarVencimentosProximos, 60 * 60 * 1000);
         }
         
@@ -1096,6 +1284,8 @@
         window.naoPago = naoPago;
         window.reabrirEmprestimo = reabrirEmprestimo;
         window.excluirEmprestimo = excluirEmprestimo;
+        window.verDetalhes = verDetalhes;
+        window.imprimirComprovante = imprimirComprovante;
     </script>
 </body>
 </html>
