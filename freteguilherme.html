@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Rotas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+        
+        .auth-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+        
+        .app-container {
+            display: none;
+        }
+        
+        .sidebar {
+            background-color: var(--primary);
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.8rem 1.5rem;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .content-header {
+            background-color: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #eef1f5;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stats-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-card.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #34495e 100%);
+        }
+        
+        .stats-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%);
+        }
+        
+        .stats-card.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #e67e22 100%);
+        }
+        
+        .stats-card.info {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .logo span {
+            color: var(--secondary);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Página de Login -->
+    <div id="auth-page" class="auth-container">
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <h2 class="logo">Route<span>Manager</span></h2>
+                <p class="text-muted">Sistema de Gestão de Rotas</p>
+            </div>
+            
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" class="form-control" id="email" placeholder="seu@email.com" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="password" placeholder="Sua senha" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary" id="login-btn">Entrar</button>
+                </div>
+            </form>
+            
+            <div class="text-center mt-3">
+                <a href="#" id="register-link">Não tem uma conta? Cadastre-se</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicação Principal -->
+    <div id="app" class="app-container">
+        <div class="d-flex">
+            <!-- Sidebar -->
+            <div class="sidebar col-md-3 col-lg-2">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <div>
+                        <div id="user-name" class="fw-bold">Usuário</div>
+                        <small id="user-email" class="text-muted">usuario@email.com</small>
+                    </div>
+                </div>
+                
+                <ul class="nav flex-column mt-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="rotas">
+                            <i class="fas fa-route"></i> Rotas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="motoristas">
+                            <i class="fas fa-user-tie"></i> Motoristas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="veiculos">
+                            <i class="fas fa-truck"></i> Veículos
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link" href="#" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Conteúdo Principal -->
+            <div class="col-md-9 col-lg-10 p-0">
+                <div class="content-header">
+                    <h4 id="page-title" class="mb-0">Dashboard</h4>
+                </div>
+                
+                <div class="container-fluid">
+                    <!-- Loading -->
+                    <div id="loading" class="loading">
+                        <div class="spinner-border loading-spinner text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2">Carregando...</p>
+                    </div>
+
+                    <!-- Dashboard -->
+                    <div id="dashboard-page" class="page active">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="stats-card primary">
+                                    <i class="fas fa-route"></i>
+                                    <h3 id="total-rotas">0</h3>
+                                    <p>Total de Rotas</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card success">
+                                    <i class="fas fa-user-tie"></i>
+                                    <h3 id="total-motoristas">0</h3>
+                                    <p>Motoristas</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card warning">
+                                    <i class="fas fa-truck"></i>
+                                    <h3 id="total-veiculos">0</h3>
+                                    <p>Veículos</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stats-card info">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    <h3 id="total-gasto">R$ 0</h3>
+                                    <p>Total Gasto</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Últimas Rotas</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Data</th>
+                                                        <th>Motorista</th>
+                                                        <th>Valor Rota</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="recent-routes">
+                                                    <tr><td colspan="4" class="text-center">Nenhuma rota cadastrada</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Motoristas Ativos</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush" id="active-drivers">
+                                            <li class="list-group-item text-center">Nenhum motorista cadastrado</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Página de Rotas -->
+                    <div id="rotas-page" class="page">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Gestão de Rotas</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#routeModal">
+                                <i class="fas fa-plus"></i> Nova Rota
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Data</th>
+                                                <th>Valor Rota</th>
+                                                <th>Valor Diesel</th>
+                                                <th>KM Rodados</th>
+                                                <th>Motorista</th>
+                                                <th>Pedágio</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="routes-table">
+                                            <tr><td colspan="7" class="text-center">Nenhuma rota cadastrada</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Página de Motoristas -->
+                    <div id="motoristas-page" class="page">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Gestão de Motoristas</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#driverModal">
+                                <i class="fas fa-plus"></i> Novo Motorista
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>CNH</th>
+                                                <th>Validade CNH</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="drivers-table">
+                                            <tr><td colspan="5" class="text-center">Nenhum motorista cadastrado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Página de Veículos -->
+                    <div id="veiculos-page" class="page">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Gestão de Veículos</h5>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#vehicleModal">
+                                <i class="fas fa-plus"></i> Novo Veículo
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Placa</th>
+                                                <th>Modelo</th>
+                                                <th>Eixos</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vehicles-table">
+                                            <tr><td colspan="5" class="text-center">Nenhum veículo cadastrado</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cadastro de Rotas -->
+    <div class="modal fade" id="routeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Rota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="route-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="route-date" class="form-label">Data do Serviço</label>
+                                    <input type="date" class="form-control" id="route-date" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="route-value" class="form-label">Valor da Rota</label>
+                                    <input type="number" class="form-control" id="route-value" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="diesel-value" class="form-label">Valor do Diesel</label>
+                                    <input type="number" class="form-control" id="diesel-value" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="km-rodados" class="form-label">KM Rodados</label>
+                                    <input type="number" class="form-control" id="km-rodados" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="route-driver" class="form-label">Motorista</label>
+                                    <select class="form-control" id="route-driver" required>
+                                        <option value="">Selecione um motorista</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="route-vehicle" class="form-label">Veículo</label>
+                                    <select class="form-control" id="route-vehicle" required>
+                                        <option value="">Selecione um veículo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="toll-value" class="form-label">Valor do Pedágio (por eixo)</label>
+                                    <input type="number" class="form-control" id="toll-value" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="fixed-route" class="form-label">Rota Fixa</label>
+                                    <input type="number" class="form-control" id="fixed-route" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="driver-payment" class="form-label">Valor Pago ao Motorista</label>
+                            <input type="number" class="form-control" id="driver-payment" step="0.01" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-route">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="route-spinner"></span>
+                        Salvar Rota
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cadastro de Motoristas -->
+    <div class="modal fade" id="driverModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Motorista</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="driver-form">
+                        <div class="mb-3">
+                            <label for="driver-name" class="form-label">Nome Completo</label>
+                            <input type="text" class="form-control" id="driver-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="driver-cnh" class="form-label">Número da CNH</label>
+                            <input type="text" class="form-control" id="driver-cnh" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cnh-validity" class="form-label">Validade da CNH</label>
+                            <input type="date" class="form-control" id="cnh-validity" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-driver">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="driver-spinner"></span>
+                        Salvar Motorista
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cadastro de Veículos -->
+    <div class="modal fade" id="vehicleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Veículo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vehicle-form">
+                        <div class="mb-3">
+                            <label for="vehicle-plate" class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="vehicle-plate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicle-model" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="vehicle-model" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="vehicle-axles" class="form-label">Número de Eixos</label>
+                            <select class="form-control" id="vehicle-axles" required>
+                                <option value="1">1 Eixo</option>
+                                <option value="2">2 Eixos</option>
+                                <option value="3">3 Eixos</option>
+                                <option value="4">4 Eixos</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="save-vehicle">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" id="vehicle-spinner"></span>
+                        Salvar Veículo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuração do Firebase - SEU FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCkZQweHWGsfEu8OjHBACCxv_dbYcFAyv4",
+            authDomain: "gerar-orcamento-bd4d1.firebaseapp.com",
+            databaseURL: "https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com",
+            projectId: "gerar-orcamento-bd4d1",
+            storageBucket: "gerar-orcamento-bd4d1.firebasestorage.app",
+            messagingSenderId: "779065759341",
+            appId: "1:779065759341:web:451d068c476580c542d164",
+            measurementId: "G-QWKFHK5EFW"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Elementos da UI
+        const authPage = document.getElementById('auth-page');
+        const app = document.getElementById('app');
+        const loginForm = document.getElementById('login-form');
+        const loginBtn = document.getElementById('login-btn');
+        const registerLink = document.getElementById('register-link');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userAvatar = document.getElementById('user-avatar');
+        const userName = document.getElementById('user-name');
+        const userEmail = document.getElementById('user-email');
+        const pageTitle = document.getElementById('page-title');
+        const loading = document.getElementById('loading');
+        
+        // Navegação entre páginas
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Atualizar navegação ativa
+                document.querySelectorAll('.sidebar .nav-link').forEach(item => {
+                    item.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Mostrar página correspondente
+                const pageId = this.getAttribute('data-page');
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                document.getElementById(`${pageId}-page`).classList.add('active');
+                
+                // Atualizar título da página
+                pageTitle.textContent = this.textContent.trim();
+                
+                // Carregar dados específicos da página
+                if (pageId === 'rotas') {
+                    loadRoutes();
+                } else if (pageId === 'motoristas') {
+                    loadDrivers();
+                } else if (pageId === 'veiculos') {
+                    loadVehicles();
+                } else if (pageId === 'dashboard') {
+                    loadDashboard();
+                }
+            });
+        });
+
+        // Sistema de Autenticação
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleLogin();
+        });
+
+        function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Mostrar loading no botão
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Entrando...';
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Login bem-sucedido
+                    const user = userCredential.user;
+                    showApp(user);
+                })
+                .catch((error) => {
+                    alert('Erro no login: ' + error.message);
+                })
+                .finally(() => {
+                    // Restaurar botão
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Entrar';
+                });
+        }
+
+        registerLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Por favor, preencha e-mail e senha para se registrar.');
+                return;
+            }
+            
+            // Mostrar loading no botão
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registrando...';
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Registro bem-sucedido
+                    const user = userCredential.user;
+                    showApp(user);
+                })
+                .catch((error) => {
+                    alert('Erro no registro: ' + error.message);
+                })
+                .finally(() => {
+                    // Restaurar botão
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Entrar';
+                });
+        });
+
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                showAuth();
+            });
+        });
+
+        // Verificar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                showApp(user);
+            } else {
+                showAuth();
+            }
+        });
+
+        function showApp(user) {
+            authPage.style.display = 'none';
+            app.style.display = 'block';
+            
+            // Atualizar informações do usuário
+            const displayName = user.displayName || user.email.split('@')[0];
+            userName.textContent = displayName;
+            userEmail.textContent = user.email;
+            userAvatar.textContent = displayName.charAt(0).toUpperCase();
+            
+            // Carregar dados iniciais
+            loadDashboard();
+        }
+
+        function showAuth() {
+            authPage.style.display = 'flex';
+            app.style.display = 'none';
+        }
+
+        // Função para mostrar/ocultar loading
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // Funções para gerenciar dados
+        async function loadDashboard() {
+            showLoading(true);
+            try {
+                // Carregar estatísticas
+                const routesSnapshot = await db.collection('rotas').where('userId', '==', auth.currentUser.uid).get();
+                const driversSnapshot = await db.collection('motoristas').where('userId', '==', auth.currentUser.uid).get();
+                const vehiclesSnapshot = await db.collection('veiculos').where('userId', '==', auth.currentUser.uid).get();
+                
+                document.getElementById('total-rotas').textContent = routesSnapshot.size;
+                document.getElementById('total-motoristas').textContent = driversSnapshot.size;
+                document.getElementById('total-veiculos').textContent = vehiclesSnapshot.size;
+                
+                // Calcular total gasto
+                let totalSpent = 0;
+                routesSnapshot.forEach(doc => {
+                    const route = doc.data();
+                    totalSpent += parseFloat(route.valorRota) || 0;
+                });
+                document.getElementById('total-gasto').textContent = `R$ ${totalSpent.toFixed(2)}`;
+                
+                // Carregar rotas recentes
+                const recentRoutes = document.getElementById('recent-routes');
+                recentRoutes.innerHTML = '';
+                
+                if (routesSnapshot.empty) {
+                    recentRoutes.innerHTML = '<tr><td colspan="4" class="text-center">Nenhuma rota cadastrada</td></tr>';
+                } else {
+                    routesSnapshot.forEach(doc => {
+                        const route = doc.data();
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(route.dataServico)}</td>
+                            <td>${route.motoristaNome || 'N/A'}</td>
+                            <td>R$ ${(route.valorRota || 0).toFixed(2)}</td>
+                            <td><span class="badge bg-success">Concluída</span></td>
+                        `;
+                        recentRoutes.appendChild(row);
+                    });
+                }
+                
+                // Carregar motoristas ativos
+                const activeDrivers = document.getElementById('active-drivers');
+                activeDrivers.innerHTML = '';
+                
+                if (driversSnapshot.empty) {
+                    activeDrivers.innerHTML = '<li class="list-group-item text-center">Nenhum motorista cadastrado</li>';
+                } else {
+                    driversSnapshot.forEach(doc => {
+                        const driver = doc.data();
+                        const item = document.createElement('li');
+                        item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                        item.innerHTML = `
+                            <div>
+                                <h6 class="mb-0">${driver.nome}</h6>
+                                <small class="text-muted">CNH: ${driver.cnh}</small>
+                            </div>
+                            <span class="badge bg-success rounded-pill">Ativo</span>
+                        `;
+                        activeDrivers.appendChild(item);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+                alert('Erro ao carregar dados do dashboard');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadRoutes() {
+            showLoading(true);
+            const routesTable = document.getElementById('routes-table');
+            routesTable.innerHTML = '';
+            
+            try {
+                const snapshot = await db.collection('rotas').where('userId', '==', auth.currentUser.uid).get();
+                
+                if (snapshot.empty) {
+                    routesTable.innerHTML = '<tr><td colspan="7" class="text-center">Nenhuma rota cadastrada</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const route = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(route.dataServico)}</td>
+                        <td>R$ ${(route.valorRota || 0).toFixed(2)}</td>
+                        <td>R$ ${(route.valorDiesel || 0).toFixed(2)}</td>
+                        <td>${route.kmRodados || 0} km</td>
+                        <td>${route.motoristaNome || 'N/A'}</td>
+                        <td>R$ ${(route.valorPedagio || 0).toFixed(2)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRoute('${doc.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    routesTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar rotas:', error);
+                alert('Erro ao carregar rotas');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadDrivers() {
+            showLoading(true);
+            const driversTable = document.getElementById('drivers-table');
+            driversTable.innerHTML = '';
+            
+            try {
+                const snapshot = await db.collection('motoristas').where('userId', '==', auth.currentUser.uid).get();
+                
+                if (snapshot.empty) {
+                    driversTable.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum motorista cadastrado</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const driver = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${driver.nome}</td>
+                        <td>${driver.cnh}</td>
+                        <td>${formatDate(driver.validadeCnh)}</td>
+                        <td><span class="badge bg-success">Ativo</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDriver('${doc.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    driversTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar motoristas:', error);
+                alert('Erro ao carregar motoristas');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadVehicles() {
+            showLoading(true);
+            const vehiclesTable = document.getElementById('vehicles-table');
+            vehiclesTable.innerHTML = '';
+            
+            try {
+                const snapshot = await db.collection('veiculos').where('userId', '==', auth.currentUser.uid).get();
+                
+                if (snapshot.empty) {
+                    vehiclesTable.innerHTML = '<tr><td colspan="5" class="text-center">Nenhum veículo cadastrado</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const vehicle = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${vehicle.placa}</td>
+                        <td>${vehicle.modelo}</td>
+                        <td>${vehicle.eixos}</td>
+                        <td><span class="badge bg-success">Ativo</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${doc.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    vehiclesTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar veículos:', error);
+                alert('Erro ao carregar veículos');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Preencher selects no modal de rotas
+        async function populateDriverAndVehicleSelects() {
+            const driverSelect = document.getElementById('route-driver');
+            const vehicleSelect = document.getElementById('route-vehicle');
+            
+            // Limpar opções existentes (exceto a primeira)
+            while (driverSelect.children.length > 1) {
+                driverSelect.removeChild(driverSelect.lastChild);
+            }
+            while (vehicleSelect.children.length > 1) {
+                vehicleSelect.removeChild(vehicleSelect.lastChild);
+            }
+            
+            try {
+                // Carregar motoristas
+                const driversSnapshot = await db.collection('motoristas').where('userId', '==', auth.currentUser.uid).get();
+                driversSnapshot.forEach(doc => {
+                    const driver = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = driver.nome;
+                    driverSelect.appendChild(option);
+                });
+                
+                // Carregar veículos
+                const vehiclesSnapshot = await db.collection('veiculos').where('userId', '==', auth.currentUser.uid).get();
+                vehiclesSnapshot.forEach(doc => {
+                    const vehicle = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = `${vehicle.placa} - ${vehicle.modelo}`;
+                    vehicleSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar dados para selects:', error);
+            }
+        }
+
+        // Salvar nova rota
+        document.getElementById('save-route').addEventListener('click', async function() {
+            const saveButton = this;
+            const spinner = document.getElementById('route-spinner');
+            
+            // Validar formulário
+            const routeDate = document.getElementById('route-date').value;
+            const routeValue = document.getElementById('route-value').value;
+            const dieselValue = document.getElementById('diesel-value').value;
+            const kmRodados = document.getElementById('km-rodados').value;
+            const driverId = document.getElementById('route-driver').value;
+            const vehicleId = document.getElementById('route-vehicle').value;
+            const tollValue = document.getElementById('toll-value').value;
+            const fixedRoute = document.getElementById('fixed-route').value;
+            const driverPayment = document.getElementById('driver-payment').value;
+            
+            if (!routeDate || !routeValue || !dieselValue || !kmRodados || !driverId || !vehicleId || !tollValue || !fixedRoute || !driverPayment) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            // Mostrar loading
+            saveButton.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                // Buscar dados do motorista e veículo selecionados
+                const driverDoc = await db.collection('motoristas').doc(driverId).get();
+                const vehicleDoc = await db.collection('veiculos').doc(vehicleId).get();
+                
+                const driverName = driverDoc.exists ? driverDoc.data().nome : 'N/A';
+                const vehicleAxles = vehicleDoc.exists ? parseInt(vehicleDoc.data().eixos) : 1;
+                
+                // Calcular valor total do pedágio
+                const totalToll = parseFloat(tollValue) * vehicleAxles;
+                
+                // Salvar no Firebase
+                await db.collection('rotas').add({
+                    dataServico: routeDate,
+                    valorRota: parseFloat(routeValue),
+                    valorDiesel: parseFloat(dieselValue),
+                    kmRodados: parseInt(kmRodados),
+                    motoristaId: driverId,
+                    motoristaNome: driverName,
+                    veiculoId: vehicleId,
+                    valorPedagioEixo: parseFloat(tollValue),
+                    valorPedagio: totalToll,
+                    rotaFixa: parseFloat(fixedRoute),
+                    valorPagoMotorista: parseFloat(driverPayment),
+                    userId: auth.currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Fechar modal e recarregar dados
+                bootstrap.Modal.getInstance(document.getElementById('routeModal')).hide();
+                document.getElementById('route-form').reset();
+                
+                // Mostrar mensagem de sucesso
+                alert('Rota cadastrada com sucesso!');
+                
+                // Recarregar a página atual
+                const activePage = document.querySelector('.page.active').id;
+                if (activePage === 'rotas-page') {
+                    loadRoutes();
+                } else if (activePage === 'dashboard-page') {
+                    loadDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar rota:', error);
+                alert('Erro ao salvar rota: ' + error.message);
+            } finally {
+                // Restaurar botão
+                saveButton.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        // Salvar novo motorista
+        document.getElementById('save-driver').addEventListener('click', async function() {
+            const saveButton = this;
+            const spinner = document.getElementById('driver-spinner');
+            
+            // Validar formulário
+            const driverName = document.getElementById('driver-name').value;
+            const driverCnh = document.getElementById('driver-cnh').value;
+            const cnhValidity = document.getElementById('cnh-validity').value;
+            
+            if (!driverName || !driverCnh || !cnhValidity) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            // Mostrar loading
+            saveButton.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                await db.collection('motoristas').add({
+                    nome: driverName,
+                    cnh: driverCnh,
+                    validadeCnh: cnhValidity,
+                    userId: auth.currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Fechar modal e recarregar dados
+                bootstrap.Modal.getInstance(document.getElementById('driverModal')).hide();
+                document.getElementById('driver-form').reset();
+                
+                // Mostrar mensagem de sucesso
+                alert('Motorista cadastrado com sucesso!');
+                
+                // Recarregar a página atual
+                const activePage = document.querySelector('.page.active').id;
+                if (activePage === 'motoristas-page') {
+                    loadDrivers();
+                } else if (activePage === 'dashboard-page') {
+                    loadDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar motorista:', error);
+                alert('Erro ao salvar motorista: ' + error.message);
+            } finally {
+                // Restaurar botão
+                saveButton.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        // Salvar novo veículo
+        document.getElementById('save-vehicle').addEventListener('click', async function() {
+            const saveButton = this;
+            const spinner = document.getElementById('vehicle-spinner');
+            
+            // Validar formulário
+            const vehiclePlate = document.getElementById('vehicle-plate').value;
+            const vehicleModel = document.getElementById('vehicle-model').value;
+            const vehicleAxles = document.getElementById('vehicle-axles').value;
+            
+            if (!vehiclePlate || !vehicleModel || !vehicleAxles) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+            
+            // Mostrar loading
+            saveButton.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                await db.collection('veiculos').add({
+                    placa: vehiclePlate.toUpperCase(),
+                    modelo: vehicleModel,
+                    eixos: parseInt(vehicleAxles),
+                    userId: auth.currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Fechar modal e recarregar dados
+                bootstrap.Modal.getInstance(document.getElementById('vehicleModal')).hide();
+                document.getElementById('vehicle-form').reset();
+                
+                // Mostrar mensagem de sucesso
+                alert('Veículo cadastrado com sucesso!');
+                
+                // Recarregar a página atual
+                const activePage = document.querySelector('.page.active').id;
+                if (activePage === 'veiculos-page') {
+                    loadVehicles();
+                } else if (activePage === 'dashboard-page') {
+                    loadDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar veículo:', error);
+                alert('Erro ao salvar veículo: ' + error.message);
+            } finally {
+                // Restaurar botão
+                saveButton.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        });
+
+        // Funções de deletar
+        async function deleteDriver(id) {
+            if (confirm('Tem certeza que deseja excluir este motorista?')) {
+                try {
+                    await db.collection('motoristas').doc(id).delete();
+                    alert('Motorista excluído com sucesso!');
+                    loadDrivers();
+                    loadDashboard();
+                } catch (error) {
+                    alert('Erro ao excluir motorista: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteVehicle(id) {
+            if (confirm('Tem certeza que deseja excluir este veículo?')) {
+                try {
+                    await db.collection('veiculos').doc(id).delete();
+                    alert('Veículo excluído com sucesso!');
+                    loadVehicles();
+                    loadDashboard();
+                } catch (error) {
+                    alert('Erro ao excluir veículo: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteRoute(id) {
+            if (confirm('Tem certeza que deseja excluir esta rota?')) {
+                try {
+                    await db.collection('rotas').doc(id).delete();
+                    alert('Rota excluída com sucesso!');
+                    loadRoutes();
+                    loadDashboard();
+                } catch (error) {
+                    alert('Erro ao excluir rota: ' + error.message);
+                }
+            }
+        }
+
+        // Quando o modal de rota for aberto, preencher os selects
+        document.getElementById('routeModal').addEventListener('show.bs.modal', function() {
+            populateDriverAndVehicleSelects();
+        });
+
+        // Função auxiliar para formatar datas
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar se o usuário já está autenticado
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    showApp(user);
+                } else {
+                    showAuth();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
