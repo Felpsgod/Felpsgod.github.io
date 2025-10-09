@@ -988,7 +988,7 @@
         
         // Função para mostrar comprovante
         function mostrarComprovante(emprestimo) {
-            const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
+            const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
             
             comprovanteContent.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px;">
@@ -1133,19 +1133,6 @@
                         }
                     });
                 }
-                
-                if (emprestimo.status === 'pago') {
-                    const dataPagamento = new Date(emprestimo.dataPagamento || emprestimo.dataCriacao);
-                    const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
-                    
-                    if (dataPagamento.getMonth() === mesAtual && dataPagamento.getFullYear() === anoAtual) {
-                        totalJurosMensal += jurosTotais;
-                    }
-                    
-                    if (dataPagamento.getFullYear() === anoAtual) {
-                        totalJurosAnual += jurosTotais;
-                    }
-                }
             });
             
             jurosMensal.textContent = formatarMoeda(totalJurosMensal);
@@ -1190,7 +1177,7 @@
                     card.classList.add('vencimento-proximo');
                 }
                 
-                const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
+                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 
                 card.innerHTML = `
                     <div class="loan-header">
@@ -1251,17 +1238,27 @@
         function marcarComoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // CORREÇÃO: Calcular juros apenas sobre o valor original
+                // CORREÇÃO FINAL: Calcular juros apenas sobre o valor original UMA VEZ
                 const jurosTotais = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 
                 const pagamentoTotal = {
                     data: new Date().toISOString(),
                     valorPago: jurosTotais,
-                    tipo: 'pagamento_total'
+                    tipo: 'pagamento_total',
+                    valorOriginal: emprestimo.valorOriginal,
+                    porcentagem: emprestimo.porcentagem
                 };
                 
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-                emprestimo.historicoJuros.push(pagamentoTotal);
+                
+                // Verificar se já existe um pagamento total para evitar duplicação
+                const pagamentoExistente = emprestimo.historicoJuros.find(
+                    item => item.tipo === 'pagamento_total'
+                );
+                
+                if (!pagamentoExistente) {
+                    emprestimo.historicoJuros.push(pagamentoTotal);
+                }
                 
                 emprestimo.status = 'pago';
                 emprestimo.dataPagamento = new Date().toISOString();
@@ -1282,7 +1279,9 @@
                     data: new Date().toISOString(),
                     valorJuros: valorJuros,
                     valorPago: valorJuros,
-                    tipo: 'juros'
+                    tipo: 'juros',
+                    valorOriginal: emprestimo.valorOriginal,
+                    porcentagem: emprestimo.porcentagem
                 };
                 
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
@@ -1317,7 +1316,9 @@
                     data: new Date().toISOString(),
                     motivo: 'Não pagamento',
                     jurosAplicados: juros,
-                    tipo: 'multa'
+                    tipo: 'multa',
+                    valorOriginal: emprestimo.valorOriginal,
+                    porcentagem: emprestimo.porcentagem
                 };
                 
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
@@ -1334,6 +1335,14 @@
             if (emprestimo) {
                 emprestimo.status = 'pendente';
                 delete emprestimo.dataPagamento;
+                
+                // Remover o histórico de pagamento total ao reabrir
+                if (emprestimo.historicoJuros) {
+                    emprestimo.historicoJuros = emprestimo.historicoJuros.filter(
+                        item => item.tipo !== 'pagamento_total'
+                    );
+                }
+                
                 atualizarNoFirebase(emprestimo);
                 mostrarNotificacao('Empréstimo reaberto');
             }
