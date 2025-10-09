@@ -1177,7 +1177,7 @@
                     card.classList.add('vencimento-proximo');
                 }
                 
-                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+                const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
                 card.innerHTML = `
                     <div class="loan-header">
@@ -1308,16 +1308,16 @@
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                // CORREÇÃO: Aplicar juros apenas sobre o valor original
-                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
-                emprestimo.valorAtual = emprestimo.valorOriginal + juros;
+                // CORREÇÃO: Aplicar juros sobre o valor ATUAL (não sobre o original)
+                const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+                emprestimo.valorAtual += juros;
                 
                 const naoPagamento = {
                     data: new Date().toISOString(),
                     motivo: 'Não pagamento',
                     jurosAplicados: juros,
                     tipo: 'multa',
-                    valorOriginal: emprestimo.valorOriginal,
+                    valorAtual: emprestimo.valorAtual,
                     porcentagem: emprestimo.porcentagem
                 };
                 
@@ -1325,7 +1325,7 @@
                 emprestimo.historicoJuros.push(naoPagamento);
                 
                 atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Juros aplicados. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
+                mostrarNotificacao('Juros aplicados sobre o valor atual. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
             }
         }
         
