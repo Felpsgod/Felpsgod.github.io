@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Controle de Empréstimos - Premium</title>
+    <title>FinControl - Sistema de Empréstimos</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         :root {
-            --dark-green: #014040;
-            --medium-green: #02735E;
-            --light-green: #03A678;
-            --orange: #F27405;
-            --dark-red: #731702;
-            --light: #f8f9fa;
-            --dark: #343a40;
-            --gray: #6c757d;
+            --dark-gray: #403F3C;
+            --medium-gray: #595856;
+            --light-gray: #D9D9D9;
+            --silver: #A6A6A6;
+            --black: #0D0D0D;
+            --white: #FFFFFF;
         }
         
         * {
@@ -26,8 +24,8 @@
         }
         
         body {
-            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--light-gray) 0%, var(--silver) 100%);
+            color: var(--black);
             line-height: 1.6;
             padding: 10px;
             min-height: 100vh;
@@ -39,51 +37,142 @@
             padding: 10px;
         }
         
+        /* Logo Styles */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px 25px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(13, 13, 13, 0.2);
+            border: 3px solid var(--medium-gray);
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--black) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo-icon::before {
+            content: '💰';
+            font-size: 30px;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
+            color: var(--light-gray);
+        }
+        
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: conic-gradient(
+                var(--dark-gray),
+                var(--medium-gray),
+                var(--silver),
+                var(--light-gray),
+                var(--black),
+                var(--dark-gray)
+            );
+            border-radius: 50%;
+            z-index: -1;
+            animation: rotate 3s linear infinite;
+        }
+        
+        .logo-text {
+            text-align: left;
+        }
+        
+        .logo-primary {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--black) 0%, var(--dark-gray) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .logo-secondary {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         header {
-            background: var(--dark-green);
-            color: white;
-            padding: 20px 0;
+            background: var(--dark-gray);
+            color: var(--white);
+            padding: 15px 0;
             margin-bottom: 25px;
             border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(1, 64, 64, 0.3);
+            box-shadow: 0 8px 25px rgba(13, 13, 13, 0.3);
             text-align: center;
-            border: 2px solid var(--light-green);
+            border: 2px solid var(--medium-gray);
         }
         
         h1 {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: var(--white);
+        }
+        
+        .header-accent {
+            height: 5px;
+            background: linear-gradient(90deg, var(--medium-gray) 0%, var(--black) 100%);
+            border-radius: 0 0 10px 10px;
+            margin-top: 10px;
         }
         
         h2 {
             font-size: 1.5rem;
             margin-bottom: 15px;
-            color: var(--dark-green);
-            border-bottom: 2px solid var(--orange);
+            color: var(--black);
+            border-bottom: 2px solid var(--medium-gray);
             padding-bottom: 8px;
         }
         
         h3 {
             font-size: 1.2rem;
             margin-bottom: 12px;
-            color: var(--dark-green);
+            color: var(--black);
         }
         
         .card {
-            background: white;
+            background: var(--white);
             border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(1, 64, 64, 0.2);
+            box-shadow: 0 6px 20px rgba(13, 13, 13, 0.1);
             padding: 20px;
             margin-bottom: 20px;
-            border: 1px solid var(--light-green);
+            border: 1px solid var(--light-gray);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(1, 64, 64, 0.3);
+            box-shadow: 0 10px 25px rgba(13, 13, 13, 0.2);
         }
         
         .form-group {
@@ -94,31 +183,30 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--dark-green);
+            color: var(--dark-gray);
             font-size: 0.95rem;
         }
         
         input, select {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid var(--medium-green);
+            border: 2px solid var(--silver);
             border-radius: 8px;
             font-size: 16px;
-            background: white;
-            color: var(--dark-green);
+            background: var(--white);
+            color: var(--black);
             transition: all 0.3s ease;
-            max-width: 100%; /* Garante que não ultrapasse o container */
         }
         
         input:focus, select:focus {
             outline: none;
-            border-color: var(--orange);
-            box-shadow: 0 0 0 3px rgba(242, 116, 5, 0.2);
+            border-color: var(--medium-gray);
+            box-shadow: 0 0 0 3px rgba(89, 88, 86, 0.2);
         }
         
         button {
-            background: linear-gradient(135deg, var(--orange) 0%, var(--dark-red) 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%);
+            color: var(--white);
             border: none;
             padding: 14px 20px;
             border-radius: 8px;
@@ -128,48 +216,52 @@
             transition: all 0.3s ease;
             width: 100%;
             margin-bottom: 10px;
-            box-shadow: 0 4px 10px rgba(115, 23, 2, 0.3);
+            box-shadow: 0 4px 10px rgba(13, 13, 13, 0.3);
         }
         
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(115, 23, 2, 0.4);
+            box-shadow: 0 6px 15px rgba(13, 13, 13, 0.4);
         }
         
         .btn-success {
-            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
-            box-shadow: 0 4px 10px rgba(3, 166, 120, 0.3);
+            background: linear-gradient(135deg, var(--light-gray) 0%, var(--silver) 100%);
+            color: var(--black);
+            box-shadow: 0 4px 10px rgba(217, 217, 217, 0.3);
         }
         
         .btn-success:hover {
-            box-shadow: 0 6px 15px rgba(3, 166, 120, 0.4);
+            box-shadow: 0 6px 15px rgba(217, 217, 217, 0.4);
         }
         
         .btn-warning {
-            background: linear-gradient(135deg, var(--orange) 0%, #E55C00 100%);
-            box-shadow: 0 4px 10px rgba(242, 116, 5, 0.3);
+            background: linear-gradient(135deg, var(--silver) 0%, var(--medium-gray) 100%);
+            color: var(--black);
+            box-shadow: 0 4px 10px rgba(166, 166, 166, 0.3);
         }
         
         .btn-warning:hover {
-            box-shadow: 0 6px 15px rgba(242, 116, 5, 0.4);
+            box-shadow: 0 6px 15px rgba(166, 166, 166, 0.4);
         }
         
         .btn-danger {
-            background: linear-gradient(135deg, var(--dark-red) 0%, #8A1C02 100%);
-            box-shadow: 0 4px 10px rgba(115, 23, 2, 0.3);
+            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--black) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 10px rgba(64, 63, 60, 0.3);
         }
         
         .btn-danger:hover {
-            box-shadow: 0 6px 15px rgba(115, 23, 2, 0.4);
+            box-shadow: 0 6px 15px rgba(64, 63, 60, 0.4);
         }
         
         .btn-info {
-            background: linear-gradient(135deg, var(--medium-green) 0%, var(--dark-green) 100%);
-            box-shadow: 0 4px 10px rgba(2, 115, 94, 0.3);
+            background: linear-gradient(135deg, var(--medium-gray) 0%, var(--dark-gray) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 10px rgba(89, 88, 86, 0.3);
         }
         
         .btn-info:hover {
-            box-shadow: 0 6px 15px rgba(2, 115, 94, 0.4);
+            box-shadow: 0 6px 15px rgba(89, 88, 86, 0.4);
         }
         
         .btn-small {
@@ -190,10 +282,10 @@
         .dashboard-card {
             text-align: center;
             padding: 20px;
-            background: linear-gradient(135deg, var(--dark-green) 0%, var(--medium-green) 100%);
+            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--medium-gray) 100%);
             border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(1, 64, 64, 0.3);
-            border: 1px solid var(--light-green);
+            box-shadow: 0 5px 15px rgba(13, 13, 13, 0.3);
+            border: 1px solid var(--silver);
             transition: transform 0.3s ease;
         }
         
@@ -203,7 +295,7 @@
         
         .dashboard-card h3 {
             font-size: 0.85rem;
-            color: white;
+            color: var(--white);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 10px;
@@ -213,7 +305,7 @@
             font-size: 1.5rem;
             font-weight: bold;
             margin: 10px 0;
-            color: white;
+            color: var(--white);
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
         }
         
@@ -225,31 +317,31 @@
         }
         
         .loan-card {
-            background: white;
+            background: var(--white);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(1, 64, 64, 0.2);
-            border: 1px solid var(--light-green);
+            box-shadow: 0 4px 15px rgba(13, 13, 13, 0.1);
+            border: 1px solid var(--light-gray);
             transition: all 0.3s ease;
         }
         
         .loan-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(1, 64, 64, 0.3);
+            box-shadow: 0 8px 20px rgba(13, 13, 13, 0.2);
         }
         
         .loan-card.pago {
-            background: linear-gradient(135deg, rgba(3, 166, 120, 0.1) 0%, rgba(2, 115, 94, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(217, 217, 217, 0.1) 0%, rgba(166, 166, 166, 0.1) 100%);
         }
         
         .loan-card.vencimento-proximo {
-            background: linear-gradient(135deg, rgba(242, 116, 5, 0.1) 0%, rgba(230, 92, 0, 0.1) 100%);
-            border-left: 4px solid var(--orange);
+            background: linear-gradient(135deg, rgba(89, 88, 86, 0.1) 0%, rgba(64, 63, 60, 0.1) 100%);
+            border-left: 4px solid var(--medium-gray);
         }
         
         .loan-card.vencimento-hoje {
-            background: linear-gradient(135deg, rgba(115, 23, 2, 0.1) 0%, rgba(138, 28, 2, 0.1) 100%);
-            border-left: 4px solid var(--dark-red);
+            background: linear-gradient(135deg, rgba(13, 13, 13, 0.1) 0%, rgba(64, 63, 60, 0.1) 100%);
+            border-left: 4px solid var(--black);
         }
         
         .loan-header {
@@ -258,13 +350,13 @@
             align-items: center;
             margin-bottom: 15px;
             padding-bottom: 10px;
-            border-bottom: 2px solid var(--light-green);
+            border-bottom: 2px solid var(--light-gray);
         }
         
         .loan-name {
             font-size: 1.2rem;
             font-weight: bold;
-            color: var(--dark-green);
+            color: var(--black);
         }
         
         .loan-status {
@@ -275,18 +367,18 @@
         }
         
         .status-pago {
-            background: var(--light-green);
-            color: white;
+            background: var(--silver);
+            color: var(--black);
         }
         
         .status-pendente {
-            background: var(--dark-red);
-            color: white;
+            background: var(--dark-gray);
+            color: var(--white);
         }
         
         .status-atencao {
-            background: var(--orange);
-            color: white;
+            background: var(--medium-gray);
+            color: var(--white);
         }
         
         .loan-details {
@@ -298,16 +390,16 @@
             justify-content: space-between;
             margin-bottom: 8px;
             padding: 5px 0;
-            border-bottom: 1px solid rgba(3, 166, 120, 0.2);
+            border-bottom: 1px solid rgba(166, 166, 166, 0.2);
         }
         
         .loan-detail-label {
             font-weight: 600;
-            color: var(--dark-green);
+            color: var(--dark-gray);
         }
         
         .loan-detail-value {
-            color: var(--medium-green);
+            color: var(--medium-gray);
             font-weight: 500;
         }
         
@@ -326,12 +418,12 @@
             font-size: 1.1rem;
             font-weight: bold;
             margin-top: 15px;
-            color: var(--dark-green);
+            color: var(--black);
             text-align: center;
             padding: 10px;
-            background: rgba(3, 166, 120, 0.1);
+            background: rgba(217, 217, 217, 0.1);
             border-radius: 8px;
-            border-left: 4px solid var(--orange);
+            border-left: 4px solid var(--medium-gray);
         }
         
         .notification {
@@ -340,7 +432,7 @@
             right: 20px;
             padding: 15px 20px;
             border-radius: 10px;
-            color: white;
+            color: var(--white);
             z-index: 1000;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
             animation: slideIn 0.5s ease-out;
@@ -349,18 +441,20 @@
         }
         
         .notification.success {
-            background: linear-gradient(135deg, var(--light-green) 0%, var(--medium-green) 100%);
-            border-left: 5px solid var(--dark-green);
+            background: linear-gradient(135deg, var(--light-gray) 0%, var(--silver) 100%);
+            color: var(--black);
+            border-left: 5px solid var(--medium-gray);
         }
         
         .notification.error {
-            background: linear-gradient(135deg, var(--dark-red) 0%, #8A1C02 100%);
-            border-left: 5px solid #5A1301;
+            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--black) 100%);
+            border-left: 5px solid var(--black);
         }
         
         .notification.warning {
-            background: linear-gradient(135deg, var(--orange) 0%, #E55C00 100%);
-            border-left: 5px solid #C44C00;
+            background: linear-gradient(135deg, var(--silver) 0%, var(--medium-gray) 100%);
+            color: var(--black);
+            border-left: 5px solid var(--dark-gray);
         }
         
         @keyframes slideIn {
@@ -389,11 +483,11 @@
         }
         
         .juros-section {
-            background: linear-gradient(135deg, rgba(1, 64, 64, 0.05) 0%, rgba(2, 115, 94, 0.05) 100%);
+            background: linear-gradient(135deg, rgba(64, 63, 60, 0.05) 0%, rgba(89, 88, 86, 0.05) 100%);
             padding: 20px;
             border-radius: 12px;
             margin-top: 20px;
-            border: 1px solid rgba(3, 166, 120, 0.2);
+            border: 1px solid rgba(166, 166, 166, 0.2);
         }
         
         .juros-grid {
@@ -418,7 +512,7 @@
         }
         
         .modal-content {
-            background: white;
+            background: var(--white);
             border-radius: 15px;
             padding: 30px;
             max-width: 500px;
@@ -433,20 +527,20 @@
             right: 20px;
             font-size: 24px;
             cursor: pointer;
-            color: var(--dark-red);
+            color: var(--dark-gray);
             font-weight: bold;
         }
         
         .comprovante {
             text-align: center;
-            border: 2px dashed var(--orange);
+            border: 2px dashed var(--medium-gray);
             padding: 20px;
             border-radius: 10px;
             background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.9) 100%);
         }
         
         .comprovante h3 {
-            color: var(--dark-green);
+            color: var(--black);
             margin-bottom: 20px;
             font-size: 1.4rem;
         }
@@ -461,22 +555,22 @@
             justify-content: space-between;
             margin-bottom: 10px;
             padding: 8px 0;
-            border-bottom: 1px solid rgba(3, 166, 120, 0.2);
+            border-bottom: 1px solid rgba(166, 166, 166, 0.2);
         }
         
         .comprovante-label {
             font-weight: 600;
-            color: var(--dark-green);
+            color: var(--dark-gray);
         }
         
         .comprovante-valor {
-            color: var(--medium-green);
+            color: var(--medium-gray);
             font-weight: 500;
         }
         
         .btn-print {
-            background: linear-gradient(135deg, var(--orange) 0%, var(--dark-red) 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%);
+            color: var(--white);
             border: none;
             padding: 12px 25px;
             border-radius: 8px;
@@ -493,13 +587,27 @@
                 padding: 5px;
             }
             
+            .logo {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .logo-text {
+                text-align: center;
+            }
+            
+            .logo-primary {
+                font-size: 1.8rem;
+            }
+            
             header {
                 padding: 15px 0;
                 margin-bottom: 15px;
             }
             
             h1 {
-                font-size: 1.5rem;
+                font-size: 1.3rem;
             }
             
             h2 {
@@ -540,24 +648,20 @@
                 width: 100%;
                 margin: 3px 0;
             }
-            
-            /* Correção específica para inputs de data em dispositivos móveis */
-            input[type="date"] {
-                -webkit-appearance: none; /* Remove aparência padrão do iOS */
-                min-height: 44px; /* Tamanho mínimo para toque */
-                font-size: 16px; /* Evita zoom automático no iOS */
-            }
-            
-            /* Garante que os inputs não ultrapassem o container */
-            input, select {
-                max-width: 100%;
-                box-sizing: border-box;
-            }
         }
         
         @media (max-width: 480px) {
             body {
                 padding: 5px;
+            }
+            
+            .logo-primary {
+                font-size: 1.5rem;
+            }
+            
+            .logo-icon {
+                width: 50px;
+                height: 50px;
             }
             
             .dashboard-grid {
@@ -578,7 +682,6 @@
             
             input, select {
                 padding: 14px;
-                font-size: 16px; /* Evita zoom automático no iOS */
             }
             
             button {
@@ -587,15 +690,6 @@
             
             .modal-content {
                 padding: 20px;
-            }
-            
-            /* Ajustes específicos para telas muito pequenas */
-            .card {
-                padding: 12px;
-            }
-            
-            input[type="date"] {
-                min-height: 48px;
             }
         }
         
@@ -609,20 +703,24 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-        
-        .header-accent {
-            height: 5px;
-            background: linear-gradient(90deg, var(--orange) 0%, var(--dark-red) 100%);
-            border-radius: 0 0 10px 10px;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Logo -->
+        <div class="logo-container">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <div class="logo-text">
+                    <div class="logo-primary">FinControl</div>
+                    <div class="logo-secondary">GESTÃO FINANCEIRA</div>
+                </div>
+            </div>
+        </div>
+        
         <header>
-            <h1>💎 Sistema de Controle de Empréstimos</h1>
-            <p>Gerencie seus empréstimos com eficiência e estilo</p>
+            <h1>Sistema de Controle de Empréstimos</h1>
+            <p>Gerencie seus empréstimos com eficiência e segurança</p>
             <div class="header-accent"></div>
         </header>
         
@@ -756,7 +854,6 @@
         
         // Variável para controlar duplicação
         let isAdding = false;
-        let lastAddedId = null;
         
         // Função para mostrar notificação
         function mostrarNotificacao(mensagem, tipo = 'success') {
@@ -817,7 +914,6 @@
             
             isAdding = true;
             const emprestimoId = Date.now();
-            lastAddedId = emprestimoId;
             
             const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
             
@@ -848,9 +944,6 @@
                     submitBtn.textContent = '🧮 Calcular e Adicionar';
                     submitBtn.disabled = false;
                     isAdding = false;
-                    
-                    // O Firebase já vai atualizar automaticamente via listener
-                    // Não adicionamos manualmente ao array para evitar duplicação
                     
                     // Mostrar comprovante
                     mostrarComprovante(emprestimo);
@@ -898,6 +991,15 @@
             const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
             
             comprovanteContent.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="display: inline-flex; align-items: center; gap: 10px;">
+                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">💰</div>
+                        <div style="text-align: left;">
+                            <div style="font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--black) 0%, var(--medium-gray) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">FinControl</div>
+                            <div style="font-size: 0.7rem; color: var(--medium-gray); font-weight: 600;">COMPROVANTE OFICIAL</div>
+                        </div>
+                    </div>
+                </div>
                 <h3>📄 COMPROVANTE DE EMPRÉSTIMO</h3>
                 <div class="comprovante-detalhes">
                     <div class="comprovante-item">
@@ -918,7 +1020,7 @@
                     </div>
                     <div class="comprovante-item">
                         <span class="comprovante-label">Valor Total:</span>
-                        <span class="comprovante-valor" style="font-weight: bold; color: var(--dark-green);">${formatarMoeda(emprestimo.valorAtual)}</span>
+                        <span class="comprovante-valor" style="font-weight: bold; color: var(--black);">${formatarMoeda(emprestimo.valorAtual)}</span>
                     </div>
                     <div class="comprovante-item">
                         <span class="comprovante-label">Data de Vencimento:</span>
@@ -929,7 +1031,7 @@
                         <span class="comprovante-valor">#${emprestimo.id}</span>
                     </div>
                 </div>
-                <p style="margin-top: 20px; font-style: italic; color: var(--gray);">
+                <p style="margin-top: 20px; font-style: italic; color: var(--medium-gray); font-size: 0.9rem;">
                     Guarde este comprovante para referência futura.
                 </p>
                 <button class="btn-print" onclick="imprimirComprovante()">🖨️ Imprimir Comprovante</button>
@@ -946,12 +1048,14 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Comprovante de Empréstimo</title>
+                    <title>Comprovante de Empréstimo - FinControl</title>
                     <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        .comprovante { border: 2px dashed #333; padding: 20px; }
-                        .comprovante-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
-                        .comprovante-label { font-weight: bold; }
+                        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
+                        .comprovante { border: 2px dashed #333; padding: 20px; border-radius: 10px; }
+                        .comprovante-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
+                        .comprovante-label { font-weight: bold; color: #403F3C; }
+                        .comprovante-valor { color: #595856; }
+                        @media print { body { padding: 0; } }
                     </style>
                 </head>
                 <body>
@@ -1147,7 +1251,8 @@
         function marcarComoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
+                // CORREÇÃO: Calcular juros apenas sobre o valor original
+                const jurosTotais = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 
                 const pagamentoTotal = {
                     data: new Date().toISOString(),
@@ -1162,7 +1267,7 @@
                 emprestimo.dataPagamento = new Date().toISOString();
                 
                 atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Empréstimo marcado como PAGO. Juros contabilizados.');
+                mostrarNotificacao('Empréstimo marcado como PAGO. Juros contabilizados corretamente.');
             }
         }
         
@@ -1170,7 +1275,8 @@
         function pagarJuros(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                const valorJuros = emprestimo.valorAtual - emprestimo.valorOriginal;
+                // CORREÇÃO: Calcular juros apenas sobre o valor original
+                const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 
                 const jurosPagamento = {
                     data: new Date().toISOString(),
@@ -1186,6 +1292,7 @@
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
+                // CORREÇÃO: Manter o valor atual como valor original + juros do próximo mês
                 const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 emprestimo.valorAtual = emprestimo.valorOriginal + juros;
                 
@@ -1202,8 +1309,9 @@
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
-                emprestimo.valorAtual += juros;
+                // CORREÇÃO: Aplicar juros apenas sobre o valor original
+                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+                emprestimo.valorAtual = emprestimo.valorOriginal + juros;
                 
                 const naoPagamento = {
                     data: new Date().toISOString(),
