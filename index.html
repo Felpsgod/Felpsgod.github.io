@@ -599,6 +599,51 @@
             background: #e9ecef;
         }
 
+        /* Estilos para os novos campos de procedimento */
+        .procedure-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ecf0f1;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+        
+        .procedure-group h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .add-procedure-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .add-procedure-btn:hover {
+            background: #138496;
+        }
+        
+        .remove-procedure-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .remove-procedure-btn:hover {
+            background: #c0392b;
+        }
+
         @media (max-width: 768px) {
             .nav-tabs {
                 flex-direction: column;
@@ -963,12 +1008,40 @@
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="selectedProcedure">Procedimento <span class="required">*</span></label>
-                    <select id="selectedProcedure" required>
-                        <option value="">Selecione um procedimento</option>
-                    </select>
+                <!-- Procedimento 1 (obrigatório) -->
+                <div class="procedure-group">
+                    <h4>Procedimento 1 <span class="required">*</span></h4>
+                    <div class="form-group">
+                        <select id="selectedProcedure1" required onchange="updateBudgetSummary()">
+                            <option value="">Selecione um procedimento</option>
+                        </select>
+                    </div>
                 </div>
+                
+                <!-- Procedimento 2 (opcional) -->
+                <div class="procedure-group" id="procedureGroup2" style="display: none;">
+                    <h4>Procedimento 2</h4>
+                    <div class="form-group">
+                        <select id="selectedProcedure2" onchange="updateBudgetSummary()">
+                            <option value="">Selecione um procedimento</option>
+                        </select>
+                    </div>
+                    <button type="button" class="remove-procedure-btn" onclick="removeProcedure(2)">Remover Procedimento</button>
+                </div>
+                
+                <!-- Procedimento 3 (opcional) -->
+                <div class="procedure-group" id="procedureGroup3" style="display: none;">
+                    <h4>Procedimento 3</h4>
+                    <div class="form-group">
+                        <select id="selectedProcedure3" onchange="updateBudgetSummary()">
+                            <option value="">Selecione um procedimento</option>
+                        </select>
+                    </div>
+                    <button type="button" class="remove-procedure-btn" onclick="removeProcedure(3)">Remover Procedimento</button>
+                </div>
+                
+                <!-- Botão para adicionar mais procedimentos -->
+                <button type="button" class="add-procedure-btn" id="addProcedureBtn" onclick="addProcedure()">+ Adicionar Procedimento</button>
 
                 <div id="budgetSummary" class="card hidden">
                     <h3>Resumo do Orçamento</h3>
@@ -1263,6 +1336,9 @@
 
         let currentBudgetTab = 'all';
 
+        // Variáveis para controle dos procedimentos adicionais
+        let activeProcedures = 1; // Começa com 1 procedimento ativo
+
         // Lista de feriados nacionais e de Curitiba para 2024
         const feriados = [
             '2025-01-01', // Ano Novo
@@ -1303,7 +1379,11 @@
             document.getElementById('doctorForm').addEventListener('submit', saveDoctor);
             document.getElementById('budgetForm').addEventListener('submit', generateBudget);
             document.getElementById('saleForm').addEventListener('submit', saveSale);
-            document.getElementById('selectedProcedure').addEventListener('change', updateBudgetSummary);
+            
+            // Configurar evento de change para todos os selects de procedimento
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`selectedProcedure${i}`).addEventListener('change', updateBudgetSummary);
+            }
             
             // Set current date and time for sale form
             const now = new Date();
@@ -1321,6 +1401,57 @@
             // Generate initial calendar
             generateCalendar();
         });
+
+        // Função para adicionar um novo procedimento
+        function addProcedure() {
+            if (activeProcedures < 3) {
+                activeProcedures++;
+                const procedureGroup = document.getElementById(`procedureGroup${activeProcedures}`);
+                procedureGroup.style.display = 'block';
+                
+                // Atualizar visibilidade do botão de adicionar
+                if (activeProcedures >= 3) {
+                    document.getElementById('addProcedureBtn').style.display = 'none';
+                }
+                
+                // Atualizar o resumo
+                updateBudgetSummary();
+            }
+        }
+        
+        // Função para remover um procedimento
+        function removeProcedure(procedureNumber) {
+            // Limpar a seleção do procedimento
+            document.getElementById(`selectedProcedure${procedureNumber}`).value = '';
+            
+            // Ocultar o grupo do procedimento
+            document.getElementById(`procedureGroup${procedureNumber}`).style.display = 'none';
+            
+            // Reorganizar os procedimentos se necessário
+            if (procedureNumber < activeProcedures) {
+                // Mover os procedimentos seguintes para preencher o espaço
+                for (let i = procedureNumber; i < activeProcedures; i++) {
+                    const nextProcedure = document.getElementById(`selectedProcedure${i+1}`);
+                    const currentProcedure = document.getElementById(`selectedProcedure${i}`);
+                    currentProcedure.value = nextProcedure.value;
+                    nextProcedure.value = '';
+                }
+                
+                // Ocultar o último grupo
+                document.getElementById(`procedureGroup${activeProcedures}`).style.display = 'none';
+            }
+            
+            // Atualizar contador
+            activeProcedures--;
+            
+            // Mostrar o botão de adicionar se não estiver no máximo
+            if (activeProcedures < 3) {
+                document.getElementById('addProcedureBtn').style.display = 'block';
+            }
+            
+            // Atualizar o resumo
+            updateBudgetSummary();
+        }
 
         // Funções para controle do desconto
         function selectDiscountOption(element, percentage) {
@@ -1581,6 +1712,7 @@
             showAlert('Procedimento salvo com sucesso!', 'success', 'procedureAlert');
             document.getElementById('procedureForm').reset();
             displayProcedures();
+            loadProcedureOptions();
         }
 
         async function loadProcedures() {
@@ -1644,51 +1776,90 @@
             }
         }
 
+        // Função para carregar as opções de procedimento em todos os selects
         function loadProcedureOptions() {
-            const select = document.getElementById('selectedProcedure');
-            select.innerHTML = '<option value="">Selecione um procedimento</option>';
-            
-            Object.entries(procedures).forEach(([id, procedure]) => {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = procedure.nome;
-                select.appendChild(option);
-            });
+            for (let i = 1; i <= 3; i++) {
+                const select = document.getElementById(`selectedProcedure${i}`);
+                select.innerHTML = '<option value="">Selecione um procedimento</option>';
+                
+                Object.entries(procedures).forEach(([id, procedure]) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = procedure.nome;
+                    select.appendChild(option);
+                });
+            }
         }
 
-        // Budget functions
+        // Função atualizada para calcular o resumo do orçamento
         function updateBudgetSummary() {
-            const selectedId = document.getElementById('selectedProcedure').value;
-            const summaryDiv = document.getElementById('budgetSummary');
+            let totalMaterial = 0;
+            let totalMedication = 0;
+            let totalProcedure = 0;
+            let totalDiscount = 0;
             
-            if (!selectedId) {
-                summaryDiv.classList.add('hidden');
-                return;
+            // Calcular totais para todos os procedimentos selecionados
+            for (let i = 1; i <= activeProcedures; i++) {
+                const selectedId = document.getElementById(`selectedProcedure${i}`).value;
+                if (selectedId) {
+                    const procedure = procedures[selectedId];
+                    totalMaterial += procedure.custo_material;
+                    totalMedication += procedure.custo_medicamento;
+                    totalProcedure += procedure.custo_procedimento;
+                    totalDiscount += procedure.desconto;
+                }
             }
             
-            const procedure = procedures[selectedId];
-            const total = procedure.custo_material + procedure.custo_medicamento + procedure.custo_procedimento - procedure.desconto;
+            const total = totalMaterial + totalMedication + totalProcedure - totalDiscount;
             
-            document.getElementById('summaryMaterial').textContent = `R$ ${procedure.custo_material.toFixed(2)}`;
-            document.getElementById('summaryMedication').textContent = `R$ ${procedure.custo_medicamento.toFixed(2)}`;
-            document.getElementById('summaryProcedure').textContent = `R$ ${procedure.custo_procedimento.toFixed(2)}`;
-            document.getElementById('summaryDiscount').textContent = `R$ ${procedure.desconto.toFixed(2)}`;
-            document.getElementById('summaryTotal').textContent = `R$ ${total.toFixed(2)}`;
+            // Atualizar a interface apenas se houver pelo menos um procedimento selecionado
+            const hasSelectedProcedure = Array.from({length: activeProcedures}, (_, i) => 
+                document.getElementById(`selectedProcedure${i+1}`).value
+            ).some(value => value !== '');
             
-            document.getElementById('paymentCash').textContent = `R$ ${total.toFixed(2)}`;
-            document.getElementById('paymentDebit').textContent = `R$ ${total.toFixed(2)}`;
-            document.getElementById('paymentCredit').textContent = `R$ ${total.toFixed(2)}`;
+            const summaryDiv = document.getElementById('budgetSummary');
             
-            summaryDiv.classList.remove('hidden');
+            if (hasSelectedProcedure) {
+                document.getElementById('summaryMaterial').textContent = `R$ ${totalMaterial.toFixed(2)}`;
+                document.getElementById('summaryMedication').textContent = `R$ ${totalMedication.toFixed(2)}`;
+                document.getElementById('summaryProcedure').textContent = `R$ ${totalProcedure.toFixed(2)}`;
+                document.getElementById('summaryDiscount').textContent = `R$ ${totalDiscount.toFixed(2)}`;
+                document.getElementById('summaryTotal').textContent = `R$ ${total.toFixed(2)}`;
+                
+                document.getElementById('paymentCash').textContent = `R$ ${total.toFixed(2)}`;
+                document.getElementById('paymentDebit').textContent = `R$ ${total.toFixed(2)}`;
+                document.getElementById('paymentCredit').textContent = `R$ ${total.toFixed(2)}`;
+                
+                summaryDiv.classList.remove('hidden');
+            } else {
+                summaryDiv.classList.add('hidden');
+            }
         }
 
+        // Função atualizada para gerar o orçamento
         async function generateBudget(event) {
             event.preventDefault();
             
             const patientName = document.getElementById('patientName').value;
             const doctorName = document.getElementById('budgetDoctorName').value;
             const responsibleName = document.getElementById('responsibleName').value;
-            const selectedProcedureId = document.getElementById('selectedProcedure').value;
+            
+            // Coletar todos os procedimentos selecionados
+            const selectedProcedures = [];
+            const procedureNames = [];
+            
+            for (let i = 1; i <= activeProcedures; i++) {
+                const selectedId = document.getElementById(`selectedProcedure${i}`).value;
+                if (selectedId) {
+                    selectedProcedures.push(selectedId);
+                    procedureNames.push(procedures[selectedId].nome);
+                }
+            }
+            
+            if (selectedProcedures.length === 0) {
+                showAlert('Selecione pelo menos um procedimento', 'error', 'budgetAlert');
+                return;
+            }
             
             if (!responsibleName.trim()) {
                 showAlert('Por favor, preencha o campo "Responsável pelo Orçamento"', 'error', 'budgetAlert');
@@ -1696,23 +1867,31 @@
                 return;
             }
             
-            if (!selectedProcedureId) {
-                showAlert('Selecione um procedimento', 'error', 'budgetAlert');
-                return;
-            }
+            // Calcular totais
+            let totalMaterial = 0;
+            let totalMedication = 0;
+            let totalProcedure = 0;
+            let totalDiscount = 0;
             
-            const procedure = procedures[selectedProcedureId];
-            const total = procedure.custo_material + procedure.custo_medicamento + procedure.custo_procedimento - procedure.desconto;
+            selectedProcedures.forEach(procedureId => {
+                const procedure = procedures[procedureId];
+                totalMaterial += procedure.custo_material;
+                totalMedication += procedure.custo_medicamento;
+                totalProcedure += procedure.custo_procedimento;
+                totalDiscount += procedure.desconto;
+            });
+            
+            const total = totalMaterial + totalMedication + totalProcedure - totalDiscount;
             
             currentBudget = {
                 paciente: patientName,
                 medico: doctorName,
                 responsavel: responsibleName,
-                procedimento: procedure.nome,
-                total_material: procedure.custo_material,
-                total_medicamento: procedure.custo_medicamento,
-                total_procedimento: procedure.custo_procedimento,
-                desconto: procedure.desconto,
+                procedimentos: procedureNames,
+                total_material: totalMaterial,
+                total_medicamento: totalMedication,
+                total_procedimento: totalProcedure,
+                desconto: totalDiscount,
                 valor_final: total,
                 data: new Date().toISOString().split('T')[0],
                 status: 'pendente'
@@ -1806,13 +1985,14 @@
                 const status = budget.status || (budget.aprovado ? 'aprovado' : 'pendente');
                 const rowClass = status === 'aprovado' ? 'approved' : status === 'reprovado' ? 'rejected' : '';
                 const statusText = status === 'aprovado' ? 'Aprovado' : status === 'reprovado' ? 'Reprovado' : 'Pendente';
+                const procedimentosText = Array.isArray(budget.procedimentos) ? budget.procedimentos.join(', ') : budget.procedimento;
                 
                 html += `
                     <tr class="${rowClass}">
                         <td>${new Date(budget.data).toLocaleDateString('pt-BR')}</td>
                         <td>${budget.paciente}</td>
                         <td>${budget.medico}</td>
-                        <td>${budget.procedimento}</td>
+                        <td>${procedimentosText}</td>
                         <td>R$ ${budget.valor_final.toFixed(2)}</td>
                         <td>${budget.responsavel || 'N/A'}</td>
                         <td>${statusText}</td>
@@ -1852,7 +2032,7 @@
                 sales[saleId] = {
                     paciente: budget.paciente,
                     medico: budget.medico,
-                    procedimento: budget.procedimento,
+                    procedimento: Array.isArray(budget.procedimentos) ? budget.procedimentos.join(', ') : budget.procedimento,
                     total_material: budget.total_material,
                     total_medicamento: budget.total_medicamento,
                     total_procedimento: budget.total_procedimento,
@@ -2606,7 +2786,10 @@
             const procedureCount = {};
             
             Object.values(budgets).forEach(budget => {
-                procedureCount[budget.procedimento] = (procedureCount[budget.procedimento] || 0) + 1;
+                const procedimentos = Array.isArray(budget.procedimentos) ? budget.procedimentos : [budget.procedimento];
+                procedimentos.forEach(proc => {
+                    procedureCount[proc] = (procedureCount[proc] || 0) + 1;
+                });
             });
             
             const ranking = Object.entries(procedureCount)
@@ -2665,6 +2848,8 @@
             const budget = budgetData || budgets[budgetId];
             
             const pdfWindow = window.open('', '_blank');
+            
+            const procedimentosText = Array.isArray(budget.procedimentos) ? budget.procedimentos.join(', ') : budget.procedimento;
             
             const pdfContent = `
                 <!DOCTYPE html>
@@ -2909,7 +3094,7 @@
                             </div>
                             <div class="info-item">
                                 <strong>Procedimento:</strong><br>
-                                ${budget.procedimento}
+                                ${procedimentosText}
                             </div>
                             <div class="info-item">
                                 <strong>Data:</strong><br>
@@ -2975,6 +3160,3 @@
     </script>
 </body>
 </html>
-
-
-
