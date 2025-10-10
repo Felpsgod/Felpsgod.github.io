@@ -6,6 +6,7 @@
     <title>FinControl - Sistema de Empréstimos</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <style>
         :root {
             --dark-gray: #403F3C;
@@ -35,6 +36,57 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 10px;
+        }
+        
+        /* Tela de Login */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(13, 13, 13, 0.3);
+            border: 3px solid var(--medium-gray);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .login-logo {
+            margin-bottom: 30px;
+        }
+        
+        .login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%);
+            color: var(--white);
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 13, 13, 0.4);
+        }
+        
+        .hidden {
+            display: none;
         }
         
         /* Logo Styles */
@@ -264,6 +316,16 @@
             box-shadow: 0 6px 15px rgba(89, 88, 86, 0.4);
         }
         
+        .btn-edit {
+            background: linear-gradient(135deg, var(--silver) 0%, var(--dark-gray) 100%);
+            color: var(--white);
+            box-shadow: 0 4px 10px rgba(166, 166, 166, 0.3);
+        }
+        
+        .btn-edit:hover {
+            box-shadow: 0 6px 15px rgba(166, 166, 166, 0.4);
+        }
+        
         .btn-small {
             padding: 10px 15px;
             font-size: 14px;
@@ -410,10 +472,6 @@
             margin-top: 15px;
         }
         
-        .hidden {
-            display: none;
-        }
-        
         .valor-total {
             font-size: 1.1rem;
             font-weight: bold;
@@ -509,14 +567,17 @@
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
         
         .modal-content {
             background: var(--white);
             border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
+            padding: 25px;
+            max-width: 450px;
             width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             position: relative;
         }
@@ -529,6 +590,7 @@
             cursor: pointer;
             color: var(--dark-gray);
             font-weight: bold;
+            z-index: 2001;
         }
         
         .comprovante {
@@ -579,6 +641,46 @@
             font-weight: 600;
             margin-top: 20px;
             width: auto;
+        }
+        
+        /* Modal de Edição */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .edit-modal-content {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--dark-gray);
+            color: var(--white);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
         }
         
         /* Melhorias para mobile */
@@ -648,6 +750,12 @@
                 width: 100%;
                 margin: 3px 0;
             }
+            
+            .modal-content,
+            .edit-modal-content {
+                padding: 20px;
+                max-width: 95%;
+            }
         }
         
         @media (max-width: 480px) {
@@ -688,8 +796,13 @@
                 padding: 16px;
             }
             
-            .modal-content {
-                padding: 20px;
+            .modal-content,
+            .edit-modal-content {
+                padding: 15px;
+            }
+            
+            .login-card {
+                padding: 30px 20px;
             }
         }
         
@@ -703,10 +816,44 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        
+        /* Prevenir scroll quando modal está aberto */
+        body.modal-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="logo">
+                    <div class="logo-icon"></div>
+                    <div class="logo-text">
+                        <div class="logo-primary">FinControl</div>
+                        <div class="logo-secondary">GESTÃO FINANCEIRA</div>
+                    </div>
+                </div>
+            </div>
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">📧 E-mail:</label>
+                    <input type="email" id="email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">🔒 Senha:</label>
+                    <input type="password" id="password" required placeholder="Sua senha">
+                </div>
+                <button type="submit" class="login-btn">🚀 Entrar no Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aplicação Principal -->
+    <div id="appScreen" class="container hidden">
+        <button class="logout-btn" onclick="logout()">🚪 Sair</button>
+        
         <!-- Logo -->
         <div class="logo-container">
             <div class="logo">
@@ -818,26 +965,69 @@
         </div>
     </div>
 
+    <!-- Modal de Edição -->
+    <div id="editModal" class="edit-modal">
+        <div class="edit-modal-content">
+            <span class="close-modal" id="closeEditModal">&times;</span>
+            <h2>✏️ Editar Empréstimo</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editNome">👤 Nome Completo:</label>
+                    <input type="text" id="editNome" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDataEmprestimo">📅 Data do Empréstimo:</label>
+                    <input type="date" id="editDataEmprestimo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editValorEmprestimo">💰 Valor do Empréstimo (R$):</label>
+                    <input type="number" id="editValorEmprestimo" min="0" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDataVencimento">⏰ Data de Vencimento:</label>
+                    <input type="date" id="editDataVencimento" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPorcentagem">📊 Porcentagem de Juros (%):</label>
+                    <input type="number" id="editPorcentagem" min="0" step="0.1" required>
+                </div>
+                
+                <button type="submit" class="btn-success">💾 Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyReplaceWithYours",
+            apiKey: "AIzaSyCkZQweHWGsfEu8OjHBACCxv_dbYcFAyv4",
             authDomain: "gerar-orcamento-bd4d1.firebaseapp.com",
             databaseURL: "https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com",
             projectId: "gerar-orcamento-bd4d1",
-            storageBucket: "gerar-orcamento-bd4d1.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
+            storageBucket: "gerar-orcamento-bd4d1.firebasestorage.app",
+            messagingSenderId: "779065759341",
+            appId: "1:779065759341:web:451d068c476580c542d164",
+            measurementId: "G-QWKFHK5EFW"
         };
         
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
         
         // Array para armazenar os empréstimos
         let emprestimos = [];
+        let currentUser = null;
         
         // Elementos do DOM
+        const loginScreen = document.getElementById('loginScreen');
+        const appScreen = document.getElementById('appScreen');
+        const loginForm = document.getElementById('loginForm');
         const loanForm = document.getElementById('loanForm');
         const valorTotalDiv = document.getElementById('valorTotal');
         const loansGrid = document.getElementById('loansGrid');
@@ -851,9 +1041,56 @@
         const comprovanteModal = document.getElementById('comprovanteModal');
         const comprovanteContent = document.getElementById('comprovanteContent');
         const closeModal = document.getElementById('closeModal');
+        const editModal = document.getElementById('editModal');
+        const editForm = document.getElementById('editForm');
+        const closeEditModal = document.getElementById('closeEditModal');
         
         // Variável para controlar duplicação
         let isAdding = false;
+        
+        // ========== SISTEMA DE AUTENTICAÇÃO ==========
+        
+        // Verificar estado de autenticação
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loginScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+                carregarDoFirebase();
+            } else {
+                currentUser = null;
+                loginScreen.classList.remove('hidden');
+                appScreen.classList.add('hidden');
+            }
+        });
+        
+        // Login
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    mostrarNotificacao('Login realizado com sucesso!');
+                })
+                .catch((error) => {
+                    mostrarNotificacao('Erro no login: ' + error.message, 'error');
+                });
+        });
+        
+        // Logout
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    mostrarNotificacao('Logout realizado com sucesso!');
+                })
+                .catch((error) => {
+                    mostrarNotificacao('Erro no logout: ' + error.message, 'error');
+                });
+        }
+        
+        // ========== FUNÇÕES PRINCIPAIS ==========
         
         // Função para mostrar notificação
         function mostrarNotificacao(mensagem, tipo = 'success') {
@@ -927,7 +1164,8 @@
                 porcentagem,
                 status: 'pendente',
                 historicoJuros: [],
-                dataCriacao: new Date().toISOString()
+                dataCriacao: new Date().toISOString(),
+                userId: currentUser.uid
             };
             
             // Salvar no Firebase
@@ -939,7 +1177,7 @@
             submitBtn.innerHTML = '<div class="loading"></div> Salvando...';
             submitBtn.disabled = true;
             
-            database.ref('emprestimos/' + emprestimo.id).set(emprestimo)
+            database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
                 .then(() => {
                     submitBtn.textContent = '🧮 Calcular e Adicionar';
                     submitBtn.disabled = false;
@@ -1038,6 +1276,7 @@
             `;
             
             comprovanteModal.style.display = 'flex';
+            document.body.classList.add('modal-open');
         }
         
         // Função para imprimir comprovante
@@ -1069,7 +1308,9 @@
         
         // Função para carregar dados do Firebase
         function carregarDoFirebase() {
-            database.ref('emprestimos').on('value', (snapshot) => {
+            if (!currentUser) return;
+            
+            database.ref('emprestimos/' + currentUser.uid).on('value', (snapshot) => {
                 const data = snapshot.val();
                 emprestimos = [];
                 
@@ -1090,7 +1331,7 @@
         
         // Função para atualizar empréstimo no Firebase
         function atualizarNoFirebase(emprestimo) {
-            database.ref('emprestimos/' + emprestimo.id).set(emprestimo)
+            database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
                 .catch((error) => {
                     console.error('Erro ao atualizar no Firebase:', error);
                     mostrarNotificacao('Erro ao atualizar dados', 'error');
@@ -1099,7 +1340,7 @@
         
         // Função para excluir empréstimo do Firebase
         function excluirDoFirebase(id) {
-            database.ref('emprestimos/' + id).remove()
+            database.ref('emprestimos/' + currentUser.uid + '/' + id).remove()
                 .catch((error) => {
                     console.error('Erro ao excluir do Firebase:', error);
                     mostrarNotificacao('Erro ao excluir registro', 'error');
@@ -1120,16 +1361,15 @@
                     emprestimo.historicoJuros.forEach(juros => {
                         const dataJuros = new Date(juros.data);
                         
+                        // CORREÇÃO: Verificar tanto valorPago quanto valorJuros para compatibilidade
+                        const valorRecebido = juros.valorPago || juros.valorJuros || 0;
+                        
                         if (dataJuros.getMonth() === mesAtual && dataJuros.getFullYear() === anoAtual) {
-                            if (juros.valorPago) {
-                                totalJurosMensal += juros.valorPago;
-                            }
+                            totalJurosMensal += valorRecebido;
                         }
                         
                         if (dataJuros.getFullYear() === anoAtual) {
-                            if (juros.valorPago) {
-                                totalJurosAnual += juros.valorPago;
-                            }
+                            totalJurosAnual += valorRecebido;
                         }
                     });
                 }
@@ -1217,6 +1457,7 @@
                              <button class="btn-danger btn-small" onclick="naoPago(${emprestimo.id})">❌ NÃO PAGO</button>` : 
                             `<button class="btn-danger btn-small" onclick="reabrirEmprestimo(${emprestimo.id})">↩️ REABRIR</button>`
                         }
+                        <button class="btn-edit btn-small" onclick="editarEmprestimo(${emprestimo.id})">✏️ EDITAR</button>
                         <button class="btn-info btn-small" onclick="verDetalhes(${emprestimo.id})">📋 DETALHES</button>
                         <button class="btn-danger btn-small" onclick="excluirEmprestimo(${emprestimo.id})">🗑️ EXCLUIR</button>
                     </div>
@@ -1234,18 +1475,21 @@
             }
         }
         
-        // Função para marcar empréstimo como pago
+        // ========== CORREÇÕES DOS JUROS ==========
+        
+        // Função para marcar empréstimo como pago - VERSÃO CORRIGIDA
         function marcarComoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // CORREÇÃO FINAL: Calcular juros apenas sobre o valor original UMA VEZ
-                const jurosTotais = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+                // CORREÇÃO: Calcular juros totais pagos (valor atual - valor original)
+                const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
                 const pagamentoTotal = {
                     data: new Date().toISOString(),
-                    valorPago: jurosTotais,
+                    valorPago: jurosTotais, // CORREÇÃO: Usar juros totais acumulados
                     tipo: 'pagamento_total',
                     valorOriginal: emprestimo.valorOriginal,
+                    valorAtual: emprestimo.valorAtual,
                     porcentagem: emprestimo.porcentagem
                 };
                 
@@ -1264,23 +1508,23 @@
                 emprestimo.dataPagamento = new Date().toISOString();
                 
                 atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Empréstimo marcado como PAGO. Juros contabilizados corretamente.');
+                mostrarNotificacao(`Empréstimo marcado como PAGO. Juros totais de ${formatarMoeda(jurosTotais)} contabilizados.`);
             }
         }
         
-        // Função para pagar apenas os juros
+        // Função para pagar apenas os juros - VERSÃO CORRIGIDA
         function pagarJuros(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // CORREÇÃO: Calcular juros apenas sobre o valor original
-                const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+                // CORREÇÃO: Calcular juros sobre o valor ATUAL (não sobre o original)
+                const valorJuros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
                 
                 const jurosPagamento = {
                     data: new Date().toISOString(),
-                    valorJuros: valorJuros,
-                    valorPago: valorJuros,
+                    valorPago: valorJuros, // CORREÇÃO: usar valorPago em vez de valorJuros
                     tipo: 'juros',
                     valorOriginal: emprestimo.valorOriginal,
+                    valorAtual: emprestimo.valorAtual,
                     porcentagem: emprestimo.porcentagem
                 };
                 
@@ -1291,12 +1535,12 @@
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                // CORREÇÃO: Manter o valor atual como valor original + juros do próximo mês
-                const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
-                emprestimo.valorAtual = emprestimo.valorOriginal + juros;
+                // CORREÇÃO: Aplicar juros sobre o valor atual para o próximo mês
+                const jurosProximoMes = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+                emprestimo.valorAtual += jurosProximoMes;
                 
                 atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Juros pagos. Novo vencimento: ' + formatarData(emprestimo.dataVencimento));
+                mostrarNotificacao(`Juros de ${formatarMoeda(valorJuros)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
             }
         }
         
@@ -1348,6 +1592,54 @@
             }
         }
         
+        // ========== FUNÇÃO DE EDIÇÃO ==========
+        
+        // Função para editar empréstimo
+        function editarEmprestimo(id) {
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                document.getElementById('editId').value = emprestimo.id;
+                document.getElementById('editNome').value = emprestimo.nome;
+                document.getElementById('editDataEmprestimo').value = emprestimo.dataEmprestimo;
+                document.getElementById('editValorEmprestimo').value = emprestimo.valorOriginal;
+                document.getElementById('editDataVencimento').value = emprestimo.dataVencimento;
+                document.getElementById('editPorcentagem').value = emprestimo.porcentagem;
+                
+                editModal.style.display = 'flex';
+                document.body.classList.add('modal-open');
+            }
+        }
+        
+        // Função para salvar edição
+        editForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = parseInt(document.getElementById('editId').value);
+            const nome = document.getElementById('editNome').value;
+            const dataEmprestimo = document.getElementById('editDataEmprestimo').value;
+            const valorEmprestimo = parseFloat(document.getElementById('editValorEmprestimo').value);
+            const dataVencimento = document.getElementById('editDataVencimento').value;
+            const porcentagem = parseFloat(document.getElementById('editPorcentagem').value);
+            
+            const emprestimo = emprestimos.find(emp => emp.id === id);
+            if (emprestimo) {
+                emprestimo.nome = nome;
+                emprestimo.dataEmprestimo = dataEmprestimo;
+                emprestimo.valorOriginal = valorEmprestimo;
+                emprestimo.dataVencimento = dataVencimento;
+                emprestimo.porcentagem = porcentagem;
+                
+                // Recalcular valor atual
+                emprestimo.valorAtual = calcularValorTotal(valorEmprestimo, porcentagem);
+                
+                atualizarNoFirebase(emprestimo);
+                mostrarNotificacao('Empréstimo atualizado com sucesso!');
+                
+                editModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
+        
         // Função para excluir empréstimo
         function excluirEmprestimo(id) {
             if (confirm('Tem certeza que deseja excluir este empréstimo? Esta ação não pode ser desfeita.')) {
@@ -1390,15 +1682,26 @@
             adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem);
         });
         
-        // Fechar modal
+        // Fechar modais
         closeModal.addEventListener('click', function() {
             comprovanteModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        });
+        
+        closeEditModal.addEventListener('click', function() {
+            editModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
         });
         
         // Fechar modal clicando fora
         window.addEventListener('click', function(e) {
             if (e.target === comprovanteModal) {
                 comprovanteModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+            if (e.target === editModal) {
+                editModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
             }
         });
         
@@ -1410,8 +1713,6 @@
             const vencimento = new Date();
             vencimento.setDate(vencimento.getDate() + 30);
             document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
-            
-            carregarDoFirebase();
             
             setInterval(verificarVencimentosProximos, 60 * 60 * 1000);
         }
@@ -1427,6 +1728,8 @@
         window.excluirEmprestimo = excluirEmprestimo;
         window.verDetalhes = verDetalhes;
         window.imprimirComprovante = imprimirComprovante;
+        window.editarEmprestimo = editarEmprestimo;
+        window.logout = logout;
     </script>
 </body>
 </html>
