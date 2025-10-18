@@ -78,11 +78,31 @@
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
+            margin-bottom: 15px;
         }
         
         .login-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(13, 13, 13, 0.4);
+        }
+        
+        .forgot-password {
+            background: transparent;
+            color: var(--medium-gray);
+            border: 1px solid var(--silver);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .forgot-password:hover {
+            background: var(--light-gray);
+            color: var(--black);
+            transform: translateY(-2px);
         }
         
         .hidden {
@@ -93,6 +113,7 @@
         .logo-container {
             text-align: center;
             margin-bottom: 10px;
+            position: relative;
         }
         
         .logo {
@@ -183,6 +204,7 @@
             box-shadow: 0 8px 25px rgba(13, 13, 13, 0.3);
             text-align: center;
             border: 2px solid var(--medium-gray);
+            position: relative;
         }
         
         h1 {
@@ -670,17 +692,29 @@
             position: relative;
         }
         
+        /* Botão de logout discreto */
         .logout-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--dark-gray);
+            top: 15px;
+            right: 15px;
+            background: var(--black);
             color: var(--white);
             border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
+            padding: 10px 15px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 10;
+            width: auto;
+            min-width: 60px;
+        }
+        
+        .logout-btn:hover {
+            background: var(--dark-gray);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
         
         /* Melhorias para mobile */
@@ -756,6 +790,14 @@
                 padding: 20px;
                 max-width: 95%;
             }
+            
+            .logout-btn {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 12px;
+                min-width: 50px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -804,6 +846,12 @@
             .login-card {
                 padding: 30px 20px;
             }
+            
+            .logout-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+                min-width: 45px;
+            }
         }
         
         /* Efeitos visuais adicionais */
@@ -846,13 +894,14 @@
                     <input type="password" id="password" required placeholder="Sua senha">
                 </div>
                 <button type="submit" class="login-btn">🚀 Entrar no Sistema</button>
+                <button type="button" class="forgot-password" onclick="esqueciSenha()">🔓 Esqueci minha senha</button>
             </form>
         </div>
     </div>
 
     <!-- Aplicação Principal -->
     <div id="appScreen" class="container hidden">
-        <button class="logout-btn" onclick="logout()">🚪 Sair</button>
+        <button class="logout-btn" onclick="logout()">Sair</button>
         
         <!-- Logo -->
         <div class="logo-container">
@@ -1005,14 +1054,14 @@
     <script>
         // Configuração do Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyCkZQweHWGsfEu8OjHBACCxv_dbYcFAyv4",
-            authDomain: "gerar-orcamento-bd4d1.firebaseapp.com",
-            databaseURL: "https://gerar-orcamento-bd4d1-default-rtdb.firebaseio.com",
-            projectId: "gerar-orcamento-bd4d1",
-            storageBucket: "gerar-orcamento-bd4d1.firebasestorage.app",
-            messagingSenderId: "779065759341",
-            appId: "1:779065759341:web:451d068c476580c542d164",
-            measurementId: "G-QWKFHK5EFW"
+        apiKey: "AIzaSyC4Hnr9l0CATEiXMtV_ECviIIkO4bXvOps",
+        authDomain: "appemprestimo-aa187.firebaseapp.com",
+        databaseURL: "https://appemprestimo-aa187-default-rtdb.firebaseio.com",
+        projectId: "appemprestimo-aa187",
+        storageBucket: "appemprestimo-aa187.firebasestorage.app",
+        messagingSenderId: "68605625897",
+        appId: "1:68605625897:web:9ef4c09281f0ce666afe38",
+        measurementId: "G-RQHBXW615N"
         };
         
         // Inicializar Firebase
@@ -1087,6 +1136,24 @@
                 })
                 .catch((error) => {
                     mostrarNotificacao('Erro no logout: ' + error.message, 'error');
+                });
+        }
+        
+        // Função para recuperação de senha
+        function esqueciSenha() {
+            const email = document.getElementById('email').value;
+            
+            if (!email) {
+                mostrarNotificacao('Por favor, digite seu e-mail para recuperar a senha.', 'warning');
+                return;
+            }
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    mostrarNotificacao('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+                })
+                .catch((error) => {
+                    mostrarNotificacao('Erro ao enviar e-mail de recuperação: ' + error.message, 'error');
                 });
         }
         
@@ -1481,16 +1548,18 @@
         function marcarComoPago(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // CORREÇÃO: Calcular juros totais pagos (valor atual - valor original)
+                // CORREÇÃO: Registrar o valor ATUAL (não apenas os juros)
+                const valorTotalRecebido = emprestimo.valorAtual;
                 const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
                 const pagamentoTotal = {
                     data: new Date().toISOString(),
-                    valorPago: jurosTotais, // CORREÇÃO: Usar juros totais acumulados
+                    valorPago: valorTotalRecebido, // CORREÇÃO: Registrar o valor total recebido
                     tipo: 'pagamento_total',
                     valorOriginal: emprestimo.valorOriginal,
                     valorAtual: emprestimo.valorAtual,
-                    porcentagem: emprestimo.porcentagem
+                    porcentagem: emprestimo.porcentagem,
+                    jurosRecebidos: jurosTotais
                 };
                 
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
@@ -1508,20 +1577,20 @@
                 emprestimo.dataPagamento = new Date().toISOString();
                 
                 atualizarNoFirebase(emprestimo);
-                mostrarNotificacao(`Empréstimo marcado como PAGO. Juros totais de ${formatarMoeda(jurosTotais)} contabilizados.`);
+                mostrarNotificacao(`Empréstimo marcado como PAGO. Valor total de ${formatarMoeda(valorTotalRecebido)} recebido (${formatarMoeda(jurosTotais)} em juros).`);
             }
         }
         
-        // Função para pagar apenas os juros - VERSÃO CORRIGIDA
+        // Função para pagar apenas os juros - VERSÃO CORRIGIDA CONFORME SOLICITADO
         function pagarJuros(id) {
             const emprestimo = emprestimos.find(emp => emp.id === id);
             if (emprestimo) {
-                // CORREÇÃO: Calcular juros sobre o valor ATUAL (não sobre o original)
-                const valorJuros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+                // CORREÇÃO: Calcular juros sobre o valor ORIGINAL (não sobre o atual)
+                const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
                 
                 const jurosPagamento = {
                     data: new Date().toISOString(),
-                    valorPago: valorJuros, // CORREÇÃO: usar valorPago em vez de valorJuros
+                    valorPago: valorJuros,
                     tipo: 'juros',
                     valorOriginal: emprestimo.valorOriginal,
                     valorAtual: emprestimo.valorAtual,
@@ -1531,13 +1600,13 @@
                 if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
                 emprestimo.historicoJuros.push(jurosPagamento);
                 
+                // Apenas adiciona um mês ao vencimento, mantém o valor atual
                 const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
                 dataVencimento.setMonth(dataVencimento.getMonth() + 1);
                 emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
                 
-                // CORREÇÃO: Aplicar juros sobre o valor atual para o próximo mês
-                const jurosProximoMes = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
-                emprestimo.valorAtual += jurosProximoMes;
+                // NÃO altera o valor atual - mantém o empréstimo original + juros
+                // O cliente pagou apenas os juros, o valor emprestado continua o mesmo
                 
                 atualizarNoFirebase(emprestimo);
                 mostrarNotificacao(`Juros de ${formatarMoeda(valorJuros)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
@@ -1730,6 +1799,7 @@
         window.imprimirComprovante = imprimirComprovante;
         window.editarEmprestimo = editarEmprestimo;
         window.logout = logout;
+        window.esqueciSenha = esqueciSenha;
     </script>
 </body>
 </html>
