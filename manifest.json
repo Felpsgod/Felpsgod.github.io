@@ -1,7 +1,7 @@
 {
   "name": "FinControl - Gestão Financeira",
   "short_name": "FinControl",
-  "description": "Sistema de controle de empréstimos e gestão financeira",
+  "description": "Sistema profissional de controle de empréstimos com notificações",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#403F3C",
