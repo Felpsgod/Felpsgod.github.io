@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinControl - Sistema de Empréstimos</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="FinControl">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FinControl">
+    <meta name="description" content="Sistema de controle de empréstimos e gestão financeira">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#403F3C">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="theme-color" content="#403F3C">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icon-192.png">
+
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/icon-192.png">
+
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
@@ -30,6 +55,11 @@
             line-height: 1.6;
             padding: 10px;
             min-height: 100vh;
+            /* Safe areas para PWA */
+            padding-top: calc(10px + env(safe-area-inset-top));
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            padding-left: calc(10px + env(safe-area-inset-left));
+            padding-right: calc(10px + env(safe-area-inset-right));
         }
         
         .container {
@@ -205,6 +235,12 @@
             text-align: center;
             border: 2px solid var(--medium-gray);
             position: relative;
+        }
+        
+        /* Ajuste para PWA standalone */
+        body.standalone-mode header {
+            padding-top: 25px;
+            margin-top: env(safe-area-inset-top);
         }
         
         h1 {
@@ -711,10 +747,60 @@
             min-width: 60px;
         }
         
+        /* Ajuste para PWA standalone */
+        body.standalone-mode .logout-btn {
+            top: 25px;
+        }
+        
         .logout-btn:hover {
             background: var(--dark-gray);
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Botão de Instalação PWA */
+        #installButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: auto;
+            padding: 12px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+            background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%);
+            color: var(--white);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #installButton:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        
+        /* Melhorias para PWA Standalone */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: calc(15px + env(safe-area-inset-top));
+                padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            }
+            
+            .login-container {
+                min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+            }
+        }
+        
+        /* Modo App (standalone) específico */
+        .standalone-mode {
+            /* Estilos específicos para quando o app está instalado */
+        }
+        
+        .standalone-mode .container {
+            padding-top: env(safe-area-inset-top);
         }
         
         /* Melhorias para mobile */
@@ -798,6 +884,14 @@
                 font-size: 12px;
                 min-width: 50px;
             }
+            
+            /* Ajustes PWA mobile */
+            #installButton {
+                bottom: 15px;
+                right: 15px;
+                padding: 10px 16px;
+                font-size: 14px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -869,9 +963,57 @@
         body.modal-open {
             overflow: hidden;
         }
+        
+        /* Splash screen para PWA */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--light-gray) 0%, var(--silver) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .splash-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(13, 13, 13, 0.2);
+            border: 3px solid var(--medium-gray);
+        }
+        
+        .splash-loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-gray);
+            border-top: 4px solid var(--dark-gray);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body>
+    <!-- Splash Screen para PWA -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">
+                <div class="logo-primary">FinControl</div>
+                <div class="logo-secondary">GESTÃO FINANCEIRA</div>
+            </div>
+        </div>
+        <div class="splash-loader"></div>
+    </div>
+
     <!-- Tela de Login -->
     <div id="loginScreen" class="login-container">
         <div class="login-card">
@@ -1052,6 +1194,13 @@
     </div>
 
     <script>
+        // ========== PWA SPLASH SCREEN ==========
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('splashScreen').style.display = 'none';
+            }, 2000); // 2 segundos
+        });
+
         // Configuração do Firebase
         const firebaseConfig = {
         apiKey: "AIzaSyC4Hnr9l0CATEiXMtV_ECviIIkO4bXvOps",
@@ -1096,6 +1245,72 @@
         
         // Variável para controlar duplicação
         let isAdding = false;
+
+        // ========== PWA FUNCTIONALITY ==========
+        let deferredPrompt;
+        const installButton = document.createElement('button');
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                    })
+                    .catch((error) => {
+                        console.log('Falha ao registrar Service Worker:', error);
+                    });
+            });
+        }
+
+        // Install Prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Mostrar botão de instalação
+            showInstallButton();
+        });
+
+        function showInstallButton() {
+            installButton.textContent = '📱 Instalar App';
+            installButton.id = 'installButton';
+            installButton.onclick = installApp;
+            
+            // Adicionar botão apenas se não existir
+            if (!document.getElementById('installButton')) {
+                document.body.appendChild(installButton);
+            }
+        }
+
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    installButton.style.display = 'none';
+                    mostrarNotificacao('App instalado com sucesso!', 'success');
+                }
+                
+                deferredPrompt = null;
+            }
+        }
+
+        // Detecta se o app está sendo executado em modo standalone
+        function isRunningStandalone() {
+            return window.matchMedia('(display-mode: standalone)').matches || 
+                   window.navigator.standalone === true;
+        }
+
+        // Atualizar interface se estiver no app
+        if (isRunningStandalone()) {
+            document.body.classList.add('standalone-mode');
+            // Esconder botão de instalação se já estiver instalado
+            if (document.getElementById('installButton')) {
+                document.getElementById('installButton').style.display = 'none';
+            }
+        }
         
         // ========== SISTEMA DE AUTENTICAÇÃO ==========
         
@@ -1800,6 +2015,7 @@
         window.editarEmprestimo = editarEmprestimo;
         window.logout = logout;
         window.esqueciSenha = esqueciSenha;
+        window.installApp = installApp;
     </script>
 </body>
 </html>
