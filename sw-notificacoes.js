@@ -14,10 +14,8 @@ self.addEventListener('activate', (event) => {
 });
 
 // Mensagens da aplicação principal
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'VERIFICAR_VENCIMENTOS') {
+self.addEventListener('message', (event) =>{
         event.waitUntil(verificarVencimentosENotificar());
-    }
 });
 
 // Notificações push (para quando implementar Push API)
@@ -76,9 +74,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Background Sync (para verificações em background)
 self.addEventListener('sync', (event) => {
-    if (event.tag === 'verificar-vencimentos') {
         event.waitUntil(verificarVencimentosENotificar());
-    }
 });
 
 // Função para verificar vencimentos (em background)
