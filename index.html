@@ -1193,16 +1193,16 @@
         </div>
     </div>
 
-    <script>
-        // ========== PWA SPLASH SCREEN ==========
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('splashScreen').style.display = 'none';
-            }, 2000); // 2 segundos
-        });
+<script>
+    // ========== PWA SPLASH SCREEN ==========
+    window.addEventListener('load', function() {
+        setTimeout(function() {
+            document.getElementById('splashScreen').style.display = 'none';
+        }, 2000);
+    });
 
-        // Configuração do Firebase
-        const firebaseConfig = {
+    // Configuração do Firebase
+    const firebaseConfig = {
         apiKey: "AIzaSyC4Hnr9l0CATEiXMtV_ECviIIkO4bXvOps",
         authDomain: "appemprestimo-aa187.firebaseapp.com",
         databaseURL: "https://appemprestimo-aa187-default-rtdb.firebaseio.com",
@@ -1211,811 +1211,1040 @@
         messagingSenderId: "68605625897",
         appId: "1:68605625897:web:9ef4c09281f0ce666afe38",
         measurementId: "G-RQHBXW615N"
+    };
+    
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const auth = firebase.auth();
+    
+    // Array para armazenar os empréstimos
+    let emprestimos = [];
+    let currentUser = null;
+    
+    // Elementos do DOM
+    const loginScreen = document.getElementById('loginScreen');
+    const appScreen = document.getElementById('appScreen');
+    const loginForm = document.getElementById('loginForm');
+    const loanForm = document.getElementById('loanForm');
+    const valorTotalDiv = document.getElementById('valorTotal');
+    const loansGrid = document.getElementById('loansGrid');
+    const totalEmprestimos = document.getElementById('totalEmprestimos');
+    const valorTotalEmprestado = document.getElementById('valorTotalEmprestado');
+    const totalPendentes = document.getElementById('totalPendentes');
+    const vencimentosHoje = document.getElementById('vencimentosHoje');
+    const jurosMensal = document.getElementById('jurosMensal');
+    const jurosAnual = document.getElementById('jurosAnual');
+    const submitBtn = document.getElementById('submitBtn');
+    const comprovanteModal = document.getElementById('comprovanteModal');
+    const comprovanteContent = document.getElementById('comprovanteContent');
+    const closeModal = document.getElementById('closeModal');
+    const editModal = document.getElementById('editModal');
+    const editForm = document.getElementById('editForm');
+    const closeEditModal = document.getElementById('closeEditModal');
+    
+    // Variável para controlar duplicação
+    let isAdding = false;
+
+    // ========== PWA FUNCTIONALITY ==========
+    let deferredPrompt;
+    const installButton = document.createElement('button');
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                    // Registrar também o service worker de notificações
+                    navigator.serviceWorker.register('/sw-notificacoes.js')
+                        .then(notifRegistration => {
+                            console.log('Service Worker de notificações registrado');
+                            inicializarSistemaNotificacoes();
+                        });
+                })
+                .catch((error) => {
+                    console.log('Falha ao registrar Service Worker:', error);
+                });
+        });
+    }
+
+    // Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallButton();
+    });
+
+    function showInstallButton() {
+        installButton.textContent = '📱 Instalar App';
+        installButton.id = 'installButton';
+        installButton.onclick = installApp;
+        
+        if (!document.getElementById('installButton')) {
+            document.body.appendChild(installButton);
+        }
+    }
+
+    async function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                installButton.style.display = 'none';
+                mostrarNotificacao('App instalado com sucesso!', 'success');
+            }
+            
+            deferredPrompt = null;
+        }
+    }
+
+    // Detecta se o app está sendo executado em modo standalone
+    function isRunningStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches || 
+               window.navigator.standalone === true;
+    }
+
+    // Atualizar interface se estiver no app
+    if (isRunningStandalone()) {
+        document.body.classList.add('standalone-mode');
+        if (document.getElementById('installButton')) {
+            document.getElementById('installButton').style.display = 'none';
+        }
+    }
+    
+    // ========== SISTEMA DE NOTIFICAÇÕES PUSH ==========
+    
+    let notificacaoPermission = false;
+    let notificacaoInterval;
+
+    function inicializarSistemaNotificacoes() {
+        // Verificar se notificações são suportadas
+        if (!('Notification' in window)) {
+            console.log('Este navegador não suporta notificações desktop');
+            return;
+        }
+
+        // Verificar permissão atual
+        if (Notification.permission === 'granted') {
+            notificacaoPermission = true;
+            iniciarVerificacaoPeriodica();
+            console.log('🔔 Notificações já autorizadas');
+        } else if (Notification.permission === 'default') {
+            // Mostrar botão para ativar notificações
+            criarBotaoAtivarNotificacoes();
+        }
+    }
+
+    function criarBotaoAtivarNotificacoes() {
+        const notifButton = document.createElement('button');
+        notifButton.innerHTML = '🔔 Ativar Notificações';
+        notifButton.className = 'btn-success';
+        notifButton.style.margin = '10px 0';
+        notifButton.style.width = 'auto';
+        notifButton.style.display = 'inline-block';
+        notifButton.onclick = solicitarPermissaoNotificacoes;
+
+        const header = document.querySelector('header');
+        if (header) {
+            const existingButton = header.querySelector('#notifButton');
+            if (!existingButton) {
+                notifButton.id = 'notifButton';
+                header.appendChild(notifButton);
+            }
+        }
+    }
+
+    async function solicitarPermissaoNotificacoes() {
+        try {
+            const permission = await Notification.requestPermission();
+            
+            if (permission === 'granted') {
+                notificacaoPermission = true;
+                mostrarNotificacao('🔔 Notificações ativadas! Você receberá alertas de vencimentos.', 'success');
+                iniciarVerificacaoPeriodica();
+                
+                // Remover botão
+                const notifButton = document.getElementById('notifButton');
+                if (notifButton) {
+                    notifButton.remove();
+                }
+            } else {
+                mostrarNotificacao('Notificações não ativadas. Você pode ativar depois nas configurações.', 'warning');
+            }
+        } catch (error) {
+            console.error('Erro ao solicitar permissão:', error);
+        }
+    }
+
+    function iniciarVerificacaoPeriodica() {
+        // Verificar imediatamente
+        verificarVencimentosENotificar();
+        
+        // Verificar a cada 30 minutos
+        notificacaoInterval = setInterval(verificarVencimentosENotificar, 30 * 60 * 1000);
+        
+        // Verificar também a cada vez que a página ganha foco
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                verificarVencimentosENotificar();
+            }
+        });
+    }
+
+    async function verificarVencimentosENotificar() {
+        if (!currentUser || !notificacaoPermission) return;
+
+        try {
+            const hoje = new Date();
+            let notificacoesParaEnviar = [];
+
+            // Verificar cada empréstimo
+            emprestimos.forEach(emprestimo => {
+                if (emprestimo.status === 'pendente') {
+                    const vencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+                    const diferenca = vencimento - hoje;
+                    const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+                    
+                    if (dias === 0) {
+                        // VENCE HOJE - Notificação URGENTE
+                        notificacoesParaEnviar.push({
+                            titulo: '🚨 VENCIMENTO HOJE!',
+                            corpo: `${emprestimo.nome} - ${formatarMoeda(emprestimo.valorAtual)}`,
+                            urgente: true,
+                            tag: `hoje-${emprestimo.id}`,
+                            vibrate: [300, 100, 300]
+                        });
+                    } else if (dias === 1) {
+                        // Vence amanhã
+                        notificacoesParaEnviar.push({
+                            titulo: '⚠️ Vence amanhã!',
+                            corpo: `${emprestimo.nome} - ${formatarMoeda(emprestimo.valorAtual)}`,
+                            urgente: true,
+                            tag: `amanha-${emprestimo.id}`,
+                            vibrate: [200, 100, 200]
+                        });
+                    } else if (dias <= 3) {
+                        // Vence em 2-3 dias
+                        notificacoesParaEnviar.push({
+                            titulo: '📅 Vencimento próximo',
+                            corpo: `${emprestimo.nome} - ${dias} dias - ${formatarMoeda(emprestimo.valorAtual)}`,
+                            urgente: false,
+                            tag: `proximo-${emprestimo.id}`,
+                            vibrate: [100, 50, 100]
+                        });
+                    }
+                }
+            });
+
+            // Enviar notificações
+            notificacoesParaEnviar.forEach(notif => {
+                enviarNotificacaoPush(notif.titulo, notif.corpo, notif.urgente, notif.tag, notif.vibrate);
+            });
+
+            // Mostrar resumo na interface
+            if (notificacoesParaEnviar.length > 0 && document.hidden) {
+                const urgentes = notificacoesParaEnviar.filter(n => n.urgente).length;
+                const normais = notificacoesParaEnviar.length - urgentes;
+                
+                if (urgentes > 0) {
+                    console.log(`🔔 ${urgentes} vencimento(s) urgente(s) notificado(s)`);
+                }
+            }
+
+        } catch (error) {
+            console.error('Erro ao verificar vencimentos:', error);
+        }
+    }
+
+    function enviarNotificacaoPush(titulo, corpo, urgente = false, tag = '', vibrate = [100, 50, 100]) {
+        if (!notificacaoPermission) return;
+
+        const options = {
+            body: corpo,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: tag,
+            requireInteraction: urgente,
+            vibrate: vibrate,
+            silent: !urgente,
+            data: {
+                url: window.location.href,
+                timestamp: new Date().getTime()
+            },
+            actions: urgente ? [
+                {
+                    action: 'open',
+                    title: '📱 Abrir App'
+                }
+            ] : []
+        };
+
+        // Enviar notificação
+        const notification = new Notification(titulo, options);
+
+        // Quando a notificação é clicada
+        notification.onclick = function(event) {
+            event.preventDefault();
+            window.focus();
+            notification.close();
+            
+            // Rolagem suave para a seção de empréstimos
+            const loansSection = document.querySelector('.loans-grid');
+            if (loansSection) {
+                loansSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+
+        // Fechar automaticamente após tempo (se não for urgente)
+        if (!urgente) {
+            setTimeout(() => {
+                notification.close();
+            }, 10000); // 10 segundos
+        }
+
+        // Log para debug
+        console.log(`📲 Notificação enviada: ${titulo} - ${corpo}`);
+    }
+
+    // Notificação quando um novo empréstimo é adicionado com vencimento próximo
+    function verificarNotificacaoNovoEmprestimo(emprestimo) {
+        if (!notificacaoPermission) return;
+
+        const vencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+        const hoje = new Date();
+        const dias = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
+
+        if (dias <= 3) {
+            setTimeout(() => {
+                enviarNotificacaoPush(
+                    '📝 Novo empréstimo adicionado',
+                    `${emprestimo.nome} - Vence em ${dias} dias - ${formatarMoeda(emprestimo.valorAtual)}`,
+                    false,
+                    `novo-${emprestimo.id}`
+                );
+            }, 2000);
+        }
+    }
+    
+    // ========== SISTEMA DE AUTENTICAÇÃO ==========
+    
+    // Verificar estado de autenticação
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            loginScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            carregarDoFirebase();
+            
+            // Inicializar notificações após login
+            setTimeout(() => {
+                inicializarSistemaNotificacoes();
+            }, 1000);
+        } else {
+            currentUser = null;
+            loginScreen.classList.remove('hidden');
+            appScreen.classList.add('hidden');
+            
+            // Parar verificações quando deslogar
+            if (notificacaoInterval) {
+                clearInterval(notificacaoInterval);
+            }
+        }
+    });
+    
+    // Login
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                mostrarNotificacao('Login realizado com sucesso!');
+            })
+            .catch((error) => {
+                mostrarNotificacao('Erro no login: ' + error.message, 'error');
+            });
+    });
+    
+    // Logout
+    function logout() {
+        auth.signOut()
+            .then(() => {
+                mostrarNotificacao('Logout realizado com sucesso!');
+            })
+            .catch((error) => {
+                mostrarNotificacao('Erro no logout: ' + error.message, 'error');
+            });
+    }
+    
+    // Função para recuperação de senha
+    function esqueciSenha() {
+        const email = document.getElementById('email').value;
+        
+        if (!email) {
+            mostrarNotificacao('Por favor, digite seu e-mail para recuperar a senha.', 'warning');
+            return;
+        }
+        
+        auth.sendPasswordResetEmail(email)
+            .then(() => {
+                mostrarNotificacao('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
+            })
+            .catch((error) => {
+                mostrarNotificacao('Erro ao enviar e-mail de recuperação: ' + error.message, 'error');
+            });
+    }
+    
+    // ========== FUNÇÕES PRINCIPAIS ==========
+    
+    // Função para mostrar notificação
+    function mostrarNotificacao(mensagem, tipo = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${tipo}`;
+        notification.textContent = mensagem;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+    
+    // Função para calcular o valor total com a porcentagem
+    function calcularValorTotal(valor, porcentagem) {
+        const acrescimo = valor * (porcentagem / 100);
+        return valor + acrescimo;
+    }
+    
+    // Função para formatar data
+    function formatarData(data) {
+        const dataObj = new Date(data + 'T00:00:00');
+        return dataObj.toLocaleDateString('pt-BR');
+    }
+    
+    // Função para formatar valor monetário
+    function formatarMoeda(valor) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(valor);
+    }
+    
+    // Função para verificar se a data está próxima (3 dias)
+    function dataProxima(dataVencimento) {
+        const hoje = new Date();
+        const vencimento = new Date(dataVencimento + 'T00:00:00');
+        const diferenca = vencimento - hoje;
+        const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
+        
+        return dias <= 3 && dias >= 0;
+    }
+    
+    // Função para verificar se a data é hoje
+    function venceHoje(dataVencimento) {
+        const hoje = new Date();
+        const vencimento = new Date(dataVencimento + 'T00:00:00');
+        
+        return hoje.toDateString() === vencimento.toDateString();
+    }
+    
+    // Função para adicionar um novo empréstimo
+    function adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem) {
+        if (isAdding) {
+            mostrarNotificacao('Aguarde, empréstimo sendo processado...', 'warning');
+            return;
+        }
+        
+        isAdding = true;
+        const emprestimoId = Date.now();
+        
+        const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
+        
+        const emprestimo = {
+            id: emprestimoId,
+            nome,
+            dataEmprestimo: dataEmprestimo,
+            valorOriginal: valorEmprestimo,
+            valorAtual: valorTotal,
+            dataVencimento: dataVencimento,
+            porcentagem,
+            status: 'pendente',
+            historicoJuros: [],
+            dataCriacao: new Date().toISOString(),
+            userId: currentUser.uid
         };
         
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
+        // Salvar no Firebase
+        salvarNoFirebase(emprestimo);
+    }
+    
+    // Função para salvar no Firebase
+    function salvarNoFirebase(emprestimo) {
+        submitBtn.innerHTML = '<div class="loading"></div> Salvando...';
+        submitBtn.disabled = true;
         
-        // Array para armazenar os empréstimos
-        let emprestimos = [];
-        let currentUser = null;
-        
-        // Elementos do DOM
-        const loginScreen = document.getElementById('loginScreen');
-        const appScreen = document.getElementById('appScreen');
-        const loginForm = document.getElementById('loginForm');
-        const loanForm = document.getElementById('loanForm');
-        const valorTotalDiv = document.getElementById('valorTotal');
-        const loansGrid = document.getElementById('loansGrid');
-        const totalEmprestimos = document.getElementById('totalEmprestimos');
-        const valorTotalEmprestado = document.getElementById('valorTotalEmprestado');
-        const totalPendentes = document.getElementById('totalPendentes');
-        const vencimentosHoje = document.getElementById('vencimentosHoje');
-        const jurosMensal = document.getElementById('jurosMensal');
-        const jurosAnual = document.getElementById('jurosAnual');
-        const submitBtn = document.getElementById('submitBtn');
-        const comprovanteModal = document.getElementById('comprovanteModal');
-        const comprovanteContent = document.getElementById('comprovanteContent');
-        const closeModal = document.getElementById('closeModal');
-        const editModal = document.getElementById('editModal');
-        const editForm = document.getElementById('editForm');
-        const closeEditModal = document.getElementById('closeEditModal');
-        
-        // Variável para controlar duplicação
-        let isAdding = false;
-
-        // ========== PWA FUNCTIONALITY ==========
-        let deferredPrompt;
-        const installButton = document.createElement('button');
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker registrado com sucesso:', registration);
-                    })
-                    .catch((error) => {
-                        console.log('Falha ao registrar Service Worker:', error);
-                    });
-            });
-        }
-
-        // Install Prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Mostrar botão de instalação
-            showInstallButton();
-        });
-
-        function showInstallButton() {
-            installButton.textContent = '📱 Instalar App';
-            installButton.id = 'installButton';
-            installButton.onclick = installApp;
-            
-            // Adicionar botão apenas se não existir
-            if (!document.getElementById('installButton')) {
-                document.body.appendChild(installButton);
-            }
-        }
-
-        async function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
+        database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
+            .then(() => {
+                submitBtn.textContent = '🧮 Calcular e Adicionar';
+                submitBtn.disabled = false;
+                isAdding = false;
                 
-                if (outcome === 'accepted') {
-                    installButton.style.display = 'none';
-                    mostrarNotificacao('App instalado com sucesso!', 'success');
-                }
-                
-                deferredPrompt = null;
-            }
-        }
-
-        // Detecta se o app está sendo executado em modo standalone
-        function isRunningStandalone() {
-            return window.matchMedia('(display-mode: standalone)').matches || 
-                   window.navigator.standalone === true;
-        }
-
-        // Atualizar interface se estiver no app
-        if (isRunningStandalone()) {
-            document.body.classList.add('standalone-mode');
-            // Esconder botão de instalação se já estiver instalado
-            if (document.getElementById('installButton')) {
-                document.getElementById('installButton').style.display = 'none';
-            }
-        }
-        
-        // ========== SISTEMA DE AUTENTICAÇÃO ==========
-        
-        // Verificar estado de autenticação
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                loginScreen.classList.add('hidden');
-                appScreen.classList.remove('hidden');
-                carregarDoFirebase();
-            } else {
-                currentUser = null;
-                loginScreen.classList.remove('hidden');
-                appScreen.classList.add('hidden');
-            }
-        });
-        
-        // Login
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    mostrarNotificacao('Login realizado com sucesso!');
-                })
-                .catch((error) => {
-                    mostrarNotificacao('Erro no login: ' + error.message, 'error');
-                });
-        });
-        
-        // Logout
-        function logout() {
-            auth.signOut()
-                .then(() => {
-                    mostrarNotificacao('Logout realizado com sucesso!');
-                })
-                .catch((error) => {
-                    mostrarNotificacao('Erro no logout: ' + error.message, 'error');
-                });
-        }
-        
-        // Função para recuperação de senha
-        function esqueciSenha() {
-            const email = document.getElementById('email').value;
-            
-            if (!email) {
-                mostrarNotificacao('Por favor, digite seu e-mail para recuperar a senha.', 'warning');
-                return;
-            }
-            
-            auth.sendPasswordResetEmail(email)
-                .then(() => {
-                    mostrarNotificacao('E-mail de recuperação enviado! Verifique sua caixa de entrada.', 'success');
-                })
-                .catch((error) => {
-                    mostrarNotificacao('Erro ao enviar e-mail de recuperação: ' + error.message, 'error');
-                });
-        }
-        
-        // ========== FUNÇÕES PRINCIPAIS ==========
-        
-        // Função para mostrar notificação
-        function mostrarNotificacao(mensagem, tipo = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${tipo}`;
-            notification.textContent = mensagem;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }
-        
-        // Função para calcular o valor total com a porcentagem
-        function calcularValorTotal(valor, porcentagem) {
-            const acrescimo = valor * (porcentagem / 100);
-            return valor + acrescimo;
-        }
-        
-        // Função para formatar data
-        function formatarData(data) {
-            const dataObj = new Date(data + 'T00:00:00');
-            return dataObj.toLocaleDateString('pt-BR');
-        }
-        
-        // Função para formatar valor monetário
-        function formatarMoeda(valor) {
-            return new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            }).format(valor);
-        }
-        
-        // Função para verificar se a data está próxima (3 dias)
-        function dataProxima(dataVencimento) {
-            const hoje = new Date();
-            const vencimento = new Date(dataVencimento + 'T00:00:00');
-            const diferenca = vencimento - hoje;
-            const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
-            
-            return dias <= 3 && dias >= 0;
-        }
-        
-        // Função para verificar se a data é hoje
-        function venceHoje(dataVencimento) {
-            const hoje = new Date();
-            const vencimento = new Date(dataVencimento + 'T00:00:00');
-            
-            return hoje.toDateString() === vencimento.toDateString();
-        }
-        
-        // Função para adicionar um novo empréstimo
-        function adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem) {
-            if (isAdding) {
-                mostrarNotificacao('Aguarde, empréstimo sendo processado...', 'warning');
-                return;
-            }
-            
-            isAdding = true;
-            const emprestimoId = Date.now();
-            
-            const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
-            
-            const emprestimo = {
-                id: emprestimoId,
-                nome,
-                dataEmprestimo: dataEmprestimo,
-                valorOriginal: valorEmprestimo,
-                valorAtual: valorTotal,
-                dataVencimento: dataVencimento,
-                porcentagem,
-                status: 'pendente',
-                historicoJuros: [],
-                dataCriacao: new Date().toISOString(),
-                userId: currentUser.uid
-            };
-            
-            // Salvar no Firebase
-            salvarNoFirebase(emprestimo);
-        }
-        
-        // Função para salvar no Firebase
-        function salvarNoFirebase(emprestimo) {
-            submitBtn.innerHTML = '<div class="loading"></div> Salvando...';
-            submitBtn.disabled = true;
-            
-            database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
-                .then(() => {
-                    submitBtn.textContent = '🧮 Calcular e Adicionar';
-                    submitBtn.disabled = false;
-                    isAdding = false;
-                    
-                    // Mostrar comprovante
-                    mostrarComprovante(emprestimo);
-                    
-                    // Mostrar notificação
-                    mostrarNotificacao('Empréstimo cadastrado com sucesso!');
-                    
-                    // Limpar formulário
-                    limparFormulario();
-                    
-                    // Verificar se é um vencimento próximo
-                    if (dataProxima(emprestimo.dataVencimento)) {
-                        mostrarNotificacao(
-                            `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
-                            'warning'
-                        );
-                    }
-                })
-                .catch((error) => {
-                    console.error('Erro ao salvar no Firebase:', error);
-                    submitBtn.textContent = '🧮 Calcular e Adicionar';
-                    submitBtn.disabled = false;
-                    isAdding = false;
-                    mostrarNotificacao('Erro ao salvar no Firebase', 'error');
-                });
-        }
-        
-        // Função para limpar formulário
-        function limparFormulario() {
-            document.getElementById('nome').value = '';
-            document.getElementById('valorEmprestimo').value = '';
-            valorTotalDiv.classList.add('hidden');
-            
-            // Manter datas padrão
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('dataEmprestimo').value = hoje;
-            
-            const vencimento = new Date();
-            vencimento.setDate(vencimento.getDate() + 30);
-            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
-        }
-        
-        // Função para mostrar comprovante
-        function mostrarComprovante(emprestimo) {
-            const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
-            
-            comprovanteContent.innerHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="display: inline-flex; align-items: center; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">💰</div>
-                        <div style="text-align: left;">
-                            <div style="font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--black) 0%, var(--medium-gray) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">FinControl</div>
-                            <div style="font-size: 0.7rem; color: var(--medium-gray); font-weight: 600;">COMPROVANTE OFICIAL</div>
-                        </div>
-                    </div>
-                </div>
-                <h3>📄 COMPROVANTE DE EMPRÉSTIMO</h3>
-                <div class="comprovante-detalhes">
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Nome:</span>
-                        <span class="comprovante-valor">${emprestimo.nome}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Data do Empréstimo:</span>
-                        <span class="comprovante-valor">${formatarData(emprestimo.dataEmprestimo)}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Valor do Empréstimo:</span>
-                        <span class="comprovante-valor">${formatarMoeda(emprestimo.valorOriginal)}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Juros (${emprestimo.porcentagem}%):</span>
-                        <span class="comprovante-valor">${formatarMoeda(juros)}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Valor Total:</span>
-                        <span class="comprovante-valor" style="font-weight: bold; color: var(--black);">${formatarMoeda(emprestimo.valorAtual)}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">Data de Vencimento:</span>
-                        <span class="comprovante-valor">${formatarData(emprestimo.dataVencimento)}</span>
-                    </div>
-                    <div class="comprovante-item">
-                        <span class="comprovante-label">ID do Empréstimo:</span>
-                        <span class="comprovante-valor">#${emprestimo.id}</span>
-                    </div>
-                </div>
-                <p style="margin-top: 20px; font-style: italic; color: var(--medium-gray); font-size: 0.9rem;">
-                    Guarde este comprovante para referência futura.
-                </p>
-                <button class="btn-print" onclick="imprimirComprovante()">🖨️ Imprimir Comprovante</button>
-            `;
-            
-            comprovanteModal.style.display = 'flex';
-            document.body.classList.add('modal-open');
-        }
-        
-        // Função para imprimir comprovante
-        function imprimirComprovante() {
-            const comprovante = comprovanteContent.innerHTML;
-            const janelaImpressao = window.open('', '_blank');
-            janelaImpressao.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Comprovante de Empréstimo - FinControl</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
-                        .comprovante { border: 2px dashed #333; padding: 20px; border-radius: 10px; }
-                        .comprovante-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
-                        .comprovante-label { font-weight: bold; color: #403F3C; }
-                        .comprovante-valor { color: #595856; }
-                        @media print { body { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    ${comprovante}
-                </body>
-                </html>
-            `);
-            janelaImpressao.document.close();
-            janelaImpressao.print();
-        }
-        
-        // Função para carregar dados do Firebase
-        function carregarDoFirebase() {
-            if (!currentUser) return;
-            
-            database.ref('emprestimos/' + currentUser.uid).on('value', (snapshot) => {
-                const data = snapshot.val();
-                emprestimos = [];
-                
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        emprestimos.push(data[key]);
-                    });
-                }
-                
-                // Ordenar por data de criação (mais recentes primeiro)
-                emprestimos.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
-                
-                atualizarDashboard();
-                renderizarCards();
-                verificarVencimentosProximos();
-            });
-        }
-        
-        // Função para atualizar empréstimo no Firebase
-        function atualizarNoFirebase(emprestimo) {
-            database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
-                .catch((error) => {
-                    console.error('Erro ao atualizar no Firebase:', error);
-                    mostrarNotificacao('Erro ao atualizar dados', 'error');
-                });
-        }
-        
-        // Função para excluir empréstimo do Firebase
-        function excluirDoFirebase(id) {
-            database.ref('emprestimos/' + currentUser.uid + '/' + id).remove()
-                .catch((error) => {
-                    console.error('Erro ao excluir do Firebase:', error);
-                    mostrarNotificacao('Erro ao excluir registro', 'error');
-                });
-        }
-        
-        // Função para calcular juros recebidos
-        function calcularJurosRecebidos() {
-            const agora = new Date();
-            const mesAtual = agora.getMonth();
-            const anoAtual = agora.getFullYear();
-            
-            let totalJurosMensal = 0;
-            let totalJurosAnual = 0;
-            
-            emprestimos.forEach(emprestimo => {
-                if (emprestimo.historicoJuros && emprestimo.historicoJuros.length > 0) {
-                    emprestimo.historicoJuros.forEach(juros => {
-                        const dataJuros = new Date(juros.data);
-                        
-                        // CORREÇÃO: Verificar tanto valorPago quanto valorJuros para compatibilidade
-                        const valorRecebido = juros.valorPago || juros.valorJuros || 0;
-                        
-                        if (dataJuros.getMonth() === mesAtual && dataJuros.getFullYear() === anoAtual) {
-                            totalJurosMensal += valorRecebido;
-                        }
-                        
-                        if (dataJuros.getFullYear() === anoAtual) {
-                            totalJurosAnual += valorRecebido;
-                        }
-                    });
-                }
-            });
-            
-            jurosMensal.textContent = formatarMoeda(totalJurosMensal);
-            jurosAnual.textContent = formatarMoeda(totalJurosAnual);
-        }
-        
-        // Função para atualizar o dashboard
-        function atualizarDashboard() {
-            totalEmprestimos.textContent = emprestimos.length;
-            
-            const totalValor = emprestimos.reduce((acc, emp) => acc + emp.valorOriginal, 0);
-            valorTotalEmprestado.textContent = formatarMoeda(totalValor);
-            
-            const pendentes = emprestimos.filter(emp => emp.status === 'pendente').length;
-            totalPendentes.textContent = pendentes;
-            
-            const hoje = new Date().toISOString().split('T')[0];
-            const vencemHoje = emprestimos.filter(emp => 
-                emp.dataVencimento === hoje && emp.status === 'pendente'
-            ).length;
-            vencimentosHoje.textContent = vencemHoje;
-            
-            calcularJurosRecebidos();
-        }
-        
-        // Função para renderizar os cards
-        function renderizarCards() {
-            // Limpar grid
-            loansGrid.innerHTML = '';
-            
-            // Adicionar cards
-            emprestimos.forEach(emprestimo => {
-                const card = document.createElement('div');
-                card.className = 'loan-card';
-                
-                // Definir classe baseada no status
-                if (emprestimo.status === 'pago') {
-                    card.classList.add('pago');
-                } else if (venceHoje(emprestimo.dataVencimento)) {
-                    card.classList.add('vencimento-hoje');
-                } else if (dataProxima(emprestimo.dataVencimento)) {
-                    card.classList.add('vencimento-proximo');
-                }
-                
-                const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
-                
-                card.innerHTML = `
-                    <div class="loan-header">
-                        <div class="loan-name">${emprestimo.nome}</div>
-                        <div class="loan-status ${emprestimo.status === 'pago' ? 'status-pago' : 
-                                 venceHoje(emprestimo.dataVencimento) ? 'status-pendente' : 
-                                 dataProxima(emprestimo.dataVencimento) ? 'status-atencao' : 'status-pendente'}">
-                            ${emprestimo.status === 'pago' ? 'PAGO' : 
-                              venceHoje(emprestimo.dataVencimento) ? 'VENCE HOJE!' : 
-                              dataProxima(emprestimo.dataVencimento) ? 'ATENÇÃO' : 'PENDENTE'}
-                        </div>
-                    </div>
-                    
-                    <div class="loan-details">
-                        <div class="loan-detail">
-                            <span class="loan-detail-label">Valor Original:</span>
-                            <span class="loan-detail-value">${formatarMoeda(emprestimo.valorOriginal)}</span>
-                        </div>
-                        <div class="loan-detail">
-                            <span class="loan-detail-label">Valor Atual:</span>
-                            <span class="loan-detail-value">${formatarMoeda(emprestimo.valorAtual)}</span>
-                        </div>
-                        <div class="loan-detail">
-                            <span class="loan-detail-label">Juros:</span>
-                            <span class="loan-detail-value">${formatarMoeda(juros)}</span>
-                        </div>
-                        <div class="loan-detail">
-                            <span class="loan-detail-label">Vencimento:</span>
-                            <span class="loan-detail-value">${formatarData(emprestimo.dataVencimento)}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="loan-actions">
-                        ${emprestimo.status === 'pendente' ? 
-                            `<button class="btn-success btn-small" onclick="marcarComoPago(${emprestimo.id})">✅ PAGO</button>
-                             <button class="btn-warning btn-small" onclick="pagarJuros(${emprestimo.id})">💰 JUROS</button>
-                             <button class="btn-danger btn-small" onclick="naoPago(${emprestimo.id})">❌ NÃO PAGO</button>` : 
-                            `<button class="btn-danger btn-small" onclick="reabrirEmprestimo(${emprestimo.id})">↩️ REABRIR</button>`
-                        }
-                        <button class="btn-edit btn-small" onclick="editarEmprestimo(${emprestimo.id})">✏️ EDITAR</button>
-                        <button class="btn-info btn-small" onclick="verDetalhes(${emprestimo.id})">📋 DETALHES</button>
-                        <button class="btn-danger btn-small" onclick="excluirEmprestimo(${emprestimo.id})">🗑️ EXCLUIR</button>
-                    </div>
-                `;
-                
-                loansGrid.appendChild(card);
-            });
-        }
-        
-        // Função para ver detalhes
-        function verDetalhes(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
+                // Mostrar comprovante
                 mostrarComprovante(emprestimo);
-            }
-        }
-        
-        // ========== CORREÇÕES DOS JUROS ==========
-        
-        // Função para marcar empréstimo como pago - VERSÃO CORRIGIDA
-        function marcarComoPago(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                // CORREÇÃO: Registrar o valor ATUAL (não apenas os juros)
-                const valorTotalRecebido = emprestimo.valorAtual;
-                const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
                 
-                const pagamentoTotal = {
-                    data: new Date().toISOString(),
-                    valorPago: valorTotalRecebido, // CORREÇÃO: Registrar o valor total recebido
-                    tipo: 'pagamento_total',
-                    valorOriginal: emprestimo.valorOriginal,
-                    valorAtual: emprestimo.valorAtual,
-                    porcentagem: emprestimo.porcentagem,
-                    jurosRecebidos: jurosTotais
-                };
+                // Mostrar notificação
+                mostrarNotificacao('Empréstimo cadastrado com sucesso!');
                 
-                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+                // Verificar notificação para vencimento próximo
+                verificarNotificacaoNovoEmprestimo(emprestimo);
                 
-                // Verificar se já existe um pagamento total para evitar duplicação
-                const pagamentoExistente = emprestimo.historicoJuros.find(
-                    item => item.tipo === 'pagamento_total'
-                );
+                // Limpar formulário
+                limparFormulario();
                 
-                if (!pagamentoExistente) {
-                    emprestimo.historicoJuros.push(pagamentoTotal);
-                }
-                
-                emprestimo.status = 'pago';
-                emprestimo.dataPagamento = new Date().toISOString();
-                
-                atualizarNoFirebase(emprestimo);
-                mostrarNotificacao(`Empréstimo marcado como PAGO. Valor total de ${formatarMoeda(valorTotalRecebido)} recebido (${formatarMoeda(jurosTotais)} em juros).`);
-            }
-        }
-        
-        // Função para pagar apenas os juros - VERSÃO CORRIGIDA CONFORME SOLICITADO
-        function pagarJuros(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                // CORREÇÃO: Calcular juros sobre o valor ORIGINAL (não sobre o atual)
-                const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
-                
-                const jurosPagamento = {
-                    data: new Date().toISOString(),
-                    valorPago: valorJuros,
-                    tipo: 'juros',
-                    valorOriginal: emprestimo.valorOriginal,
-                    valorAtual: emprestimo.valorAtual,
-                    porcentagem: emprestimo.porcentagem
-                };
-                
-                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-                emprestimo.historicoJuros.push(jurosPagamento);
-                
-                // Apenas adiciona um mês ao vencimento, mantém o valor atual
-                const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-                dataVencimento.setMonth(dataVencimento.getMonth() + 1);
-                emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
-                
-                // NÃO altera o valor atual - mantém o empréstimo original + juros
-                // O cliente pagou apenas os juros, o valor emprestado continua o mesmo
-                
-                atualizarNoFirebase(emprestimo);
-                mostrarNotificacao(`Juros de ${formatarMoeda(valorJuros)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
-            }
-        }
-        
-        // Função para marcar como não pago (aplica juros)
-        function naoPago(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-                dataVencimento.setMonth(dataVencimento.getMonth() + 1);
-                emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
-                
-                // CORREÇÃO: Aplicar juros sobre o valor ATUAL (não sobre o original)
-                const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
-                emprestimo.valorAtual += juros;
-                
-                const naoPagamento = {
-                    data: new Date().toISOString(),
-                    motivo: 'Não pagamento',
-                    jurosAplicados: juros,
-                    tipo: 'multa',
-                    valorAtual: emprestimo.valorAtual,
-                    porcentagem: emprestimo.porcentagem
-                };
-                
-                if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-                emprestimo.historicoJuros.push(naoPagamento);
-                
-                atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Juros aplicados sobre o valor atual. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
-            }
-        }
-        
-        // Função para reabrir empréstimo
-        function reabrirEmprestimo(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                emprestimo.status = 'pendente';
-                delete emprestimo.dataPagamento;
-                
-                // Remover o histórico de pagamento total ao reabrir
-                if (emprestimo.historicoJuros) {
-                    emprestimo.historicoJuros = emprestimo.historicoJuros.filter(
-                        item => item.tipo !== 'pagamento_total'
-                    );
-                }
-                
-                atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Empréstimo reaberto');
-            }
-        }
-        
-        // ========== FUNÇÃO DE EDIÇÃO ==========
-        
-        // Função para editar empréstimo
-        function editarEmprestimo(id) {
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                document.getElementById('editId').value = emprestimo.id;
-                document.getElementById('editNome').value = emprestimo.nome;
-                document.getElementById('editDataEmprestimo').value = emprestimo.dataEmprestimo;
-                document.getElementById('editValorEmprestimo').value = emprestimo.valorOriginal;
-                document.getElementById('editDataVencimento').value = emprestimo.dataVencimento;
-                document.getElementById('editPorcentagem').value = emprestimo.porcentagem;
-                
-                editModal.style.display = 'flex';
-                document.body.classList.add('modal-open');
-            }
-        }
-        
-        // Função para salvar edição
-        editForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const id = parseInt(document.getElementById('editId').value);
-            const nome = document.getElementById('editNome').value;
-            const dataEmprestimo = document.getElementById('editDataEmprestimo').value;
-            const valorEmprestimo = parseFloat(document.getElementById('editValorEmprestimo').value);
-            const dataVencimento = document.getElementById('editDataVencimento').value;
-            const porcentagem = parseFloat(document.getElementById('editPorcentagem').value);
-            
-            const emprestimo = emprestimos.find(emp => emp.id === id);
-            if (emprestimo) {
-                emprestimo.nome = nome;
-                emprestimo.dataEmprestimo = dataEmprestimo;
-                emprestimo.valorOriginal = valorEmprestimo;
-                emprestimo.dataVencimento = dataVencimento;
-                emprestimo.porcentagem = porcentagem;
-                
-                // Recalcular valor atual
-                emprestimo.valorAtual = calcularValorTotal(valorEmprestimo, porcentagem);
-                
-                atualizarNoFirebase(emprestimo);
-                mostrarNotificacao('Empréstimo atualizado com sucesso!');
-                
-                editModal.style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }
-        });
-        
-        // Função para excluir empréstimo
-        function excluirEmprestimo(id) {
-            if (confirm('Tem certeza que deseja excluir este empréstimo? Esta ação não pode ser desfeita.')) {
-                const index = emprestimos.findIndex(emp => emp.id === id);
-                if (index !== -1) {
-                    const nome = emprestimos[index].nome;
-                    excluirDoFirebase(id);
-                    mostrarNotificacao(`Empréstimo de ${nome} excluído com sucesso`);
-                }
-            }
-        }
-        
-        // Função para verificar vencimentos próximos
-        function verificarVencimentosProximos() {
-            emprestimos.forEach(emprestimo => {
-                if (emprestimo.status === 'pendente' && dataProxima(emprestimo.dataVencimento)) {
+                // Verificar se é um vencimento próximo
+                if (dataProxima(emprestimo.dataVencimento)) {
                     mostrarNotificacao(
                         `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
                         'warning'
                     );
                 }
+            })
+            .catch((error) => {
+                console.error('Erro ao salvar no Firebase:', error);
+                submitBtn.textContent = '🧮 Calcular e Adicionar';
+                submitBtn.disabled = false;
+                isAdding = false;
+                mostrarNotificacao('Erro ao salvar no Firebase', 'error');
             });
+    }
+    
+    // Função para limpar formulário
+    function limparFormulario() {
+        document.getElementById('nome').value = '';
+        document.getElementById('valorEmprestimo').value = '';
+        valorTotalDiv.classList.add('hidden');
+        
+        // Manter datas padrão
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataEmprestimo').value = hoje;
+        
+        const vencimento = new Date();
+        vencimento.setDate(vencimento.getDate() + 30);
+        document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+    }
+    
+    // Função para mostrar comprovante
+    function mostrarComprovante(emprestimo) {
+        const juros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+        
+        comprovanteContent.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="display: inline-flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">💰</div>
+                    <div style="text-align: left;">
+                        <div style="font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--black) 0%, var(--medium-gray) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">FinControl</div>
+                        <div style="font-size: 0.7rem; color: var(--medium-gray); font-weight: 600;">COMPROVANTE OFICIAL</div>
+                    </div>
+                </div>
+            </div>
+            <h3>📄 COMPROVANTE DE EMPRÉSTIMO</h3>
+            <div class="comprovante-detalhes">
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Nome:</span>
+                    <span class="comprovante-valor">${emprestimo.nome}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Data do Empréstimo:</span>
+                    <span class="comprovante-valor">${formatarData(emprestimo.dataEmprestimo)}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Valor do Empréstimo:</span>
+                    <span class="comprovante-valor">${formatarMoeda(emprestimo.valorOriginal)}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Juros (${emprestimo.porcentagem}%):</span>
+                    <span class="comprovante-valor">${formatarMoeda(juros)}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Valor Total:</span>
+                    <span class="comprovante-valor" style="font-weight: bold; color: var(--black);">${formatarMoeda(emprestimo.valorAtual)}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">Data de Vencimento:</span>
+                    <span class="comprovante-valor">${formatarData(emprestimo.dataVencimento)}</span>
+                </div>
+                <div class="comprovante-item">
+                    <span class="comprovante-label">ID do Empréstimo:</span>
+                    <span class="comprovante-valor">#${emprestimo.id}</span>
+                </div>
+            </div>
+            <p style="margin-top: 20px; font-style: italic; color: var(--medium-gray); font-size: 0.9rem;">
+                Guarde este comprovante para referência futura.
+            </p>
+            <button class="btn-print" onclick="imprimirComprovante()">🖨️ Imprimir Comprovante</button>
+        `;
+        
+        comprovanteModal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
+    
+    // Função para imprimir comprovante
+    function imprimirComprovante() {
+        const comprovante = comprovanteContent.innerHTML;
+        const janelaImpressao = window.open('', '_blank');
+        janelaImpressao.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Comprovante de Empréstimo - FinControl</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
+                    .comprovante { border: 2px dashed #333; padding: 20px; border-radius: 10px; }
+                    .comprovante-item { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 8px 0; border-bottom: 1px solid #eee; }
+                    .comprovante-label { font-weight: bold; color: #403F3C; }
+                    .comprovante-valor { color: #595856; }
+                    @media print { body { padding: 0; } }
+                </style>
+            </head>
+            <body>
+                ${comprovante}
+            </body>
+            </html>
+        `);
+        janelaImpressao.document.close();
+        janelaImpressao.print();
+    }
+    
+    // Função para carregar dados do Firebase
+    function carregarDoFirebase() {
+        if (!currentUser) return;
+        
+        database.ref('emprestimos/' + currentUser.uid).on('value', (snapshot) => {
+            const data = snapshot.val();
+            emprestimos = [];
+            
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    emprestimos.push(data[key]);
+                });
+            }
+            
+            // Ordenar por data de criação (mais recentes primeiro)
+            emprestimos.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+            
+            atualizarDashboard();
+            renderizarCards();
+            verificarVencimentosProximos();
+        });
+    }
+    
+    // Função para atualizar empréstimo no Firebase
+    function atualizarNoFirebase(emprestimo) {
+        database.ref('emprestimos/' + currentUser.uid + '/' + emprestimo.id).set(emprestimo)
+            .catch((error) => {
+                console.error('Erro ao atualizar no Firebase:', error);
+                mostrarNotificacao('Erro ao atualizar dados', 'error');
+            });
+    }
+    
+    // Função para excluir empréstimo do Firebase
+    function excluirDoFirebase(id) {
+        database.ref('emprestimos/' + currentUser.uid + '/' + id).remove()
+            .catch((error) => {
+                console.error('Erro ao excluir do Firebase:', error);
+                mostrarNotificacao('Erro ao excluir registro', 'error');
+            });
+    }
+    
+    // Função para calcular juros recebidos
+    function calcularJurosRecebidos() {
+        const agora = new Date();
+        const mesAtual = agora.getMonth();
+        const anoAtual = agora.getFullYear();
+        
+        let totalJurosMensal = 0;
+        let totalJurosAnual = 0;
+        
+        emprestimos.forEach(emprestimo => {
+            if (emprestimo.historicoJuros && emprestimo.historicoJuros.length > 0) {
+                emprestimo.historicoJuros.forEach(juros => {
+                    const dataJuros = new Date(juros.data);
+                    
+                    // CORREÇÃO: Verificar tanto valorPago quanto valorJuros para compatibilidade
+                    const valorRecebido = juros.valorPago || juros.valorJuros || 0;
+                    
+                    if (dataJuros.getMonth() === mesAtual && dataJuros.getFullYear() === anoAtual) {
+                        totalJurosMensal += valorRecebido;
+                    }
+                    
+                    if (dataJuros.getFullYear() === anoAtual) {
+                        totalJurosAnual += valorRecebido;
+                    }
+                });
+            }
+        });
+        
+        jurosMensal.textContent = formatarMoeda(totalJurosMensal);
+        jurosAnual.textContent = formatarMoeda(totalJurosAnual);
+    }
+    
+    // Função para atualizar o dashboard
+    function atualizarDashboard() {
+        totalEmprestimos.textContent = emprestimos.length;
+        
+        const totalValor = emprestimos.reduce((acc, emp) => acc + emp.valorOriginal, 0);
+        valorTotalEmprestado.textContent = formatarMoeda(totalValor);
+        
+        const pendentes = emprestimos.filter(emp => emp.status === 'pendente').length;
+        totalPendentes.textContent = pendentes;
+        
+        const hoje = new Date().toISOString().split('T')[0];
+        const vencemHoje = emprestimos.filter(emp => 
+            emp.dataVencimento === hoje && emp.status === 'pendente'
+        ).length;
+        vencimentosHoje.textContent = vencemHoje;
+        
+        calcularJurosRecebidos();
+    }
+    
+    // Função para renderizar os cards
+    function renderizarCards() {
+        // Limpar grid
+        loansGrid.innerHTML = '';
+        
+        // Adicionar cards
+        emprestimos.forEach(emprestimo => {
+            const card = document.createElement('div');
+            card.className = 'loan-card';
+            
+            // Definir classe baseada no status
+            if (emprestimo.status === 'pago') {
+                card.classList.add('pago');
+            } else if (venceHoje(emprestimo.dataVencimento)) {
+                card.classList.add('vencimento-hoje');
+            } else if (dataProxima(emprestimo.dataVencimento)) {
+                card.classList.add('vencimento-proximo');
+            }
+            
+            const juros = emprestimo.valorAtual - emprestimo.valorOriginal;
+            
+            card.innerHTML = `
+                <div class="loan-header">
+                    <div class="loan-name">${emprestimo.nome}</div>
+                    <div class="loan-status ${emprestimo.status === 'pago' ? 'status-pago' : 
+                             venceHoje(emprestimo.dataVencimento) ? 'status-pendente' : 
+                             dataProxima(emprestimo.dataVencimento) ? 'status-atencao' : 'status-pendente'}">
+                        ${emprestimo.status === 'pago' ? 'PAGO' : 
+                          venceHoje(emprestimo.dataVencimento) ? 'VENCE HOJE!' : 
+                          dataProxima(emprestimo.dataVencimento) ? 'ATENÇÃO' : 'PENDENTE'}
+                    </div>
+                </div>
+                
+                <div class="loan-details">
+                    <div class="loan-detail">
+                        <span class="loan-detail-label">Valor Original:</span>
+                        <span class="loan-detail-value">${formatarMoeda(emprestimo.valorOriginal)}</span>
+                    </div>
+                    <div class="loan-detail">
+                        <span class="loan-detail-label">Valor Atual:</span>
+                        <span class="loan-detail-value">${formatarMoeda(emprestimo.valorAtual)}</span>
+                    </div>
+                    <div class="loan-detail">
+                        <span class="loan-detail-label">Juros:</span>
+                        <span class="loan-detail-value">${formatarMoeda(juros)}</span>
+                    </div>
+                    <div class="loan-detail">
+                        <span class="loan-detail-label">Vencimento:</span>
+                        <span class="loan-detail-value">${formatarData(emprestimo.dataVencimento)}</span>
+                    </div>
+                </div>
+                
+                <div class="loan-actions">
+                    ${emprestimo.status === 'pendente' ? 
+                        `<button class="btn-success btn-small" onclick="marcarComoPago(${emprestimo.id})">✅ PAGO</button>
+                         <button class="btn-warning btn-small" onclick="pagarJuros(${emprestimo.id})">💰 JUROS</button>
+                         <button class="btn-danger btn-small" onclick="naoPago(${emprestimo.id})">❌ NÃO PAGO</button>` : 
+                        `<button class="btn-danger btn-small" onclick="reabrirEmprestimo(${emprestimo.id})">↩️ REABRIR</button>`
+                    }
+                    <button class="btn-edit btn-small" onclick="editarEmprestimo(${emprestimo.id})">✏️ EDITAR</button>
+                    <button class="btn-info btn-small" onclick="verDetalhes(${emprestimo.id})">📋 DETALHES</button>
+                    <button class="btn-danger btn-small" onclick="excluirEmprestimo(${emprestimo.id})">🗑️ EXCLUIR</button>
+                </div>
+            `;
+            
+            loansGrid.appendChild(card);
+        });
+    }
+    
+    // Função para ver detalhes
+    function verDetalhes(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            mostrarComprovante(emprestimo);
         }
+    }
+    
+    // ========== CORREÇÕES DOS JUROS ==========
+    
+    // Função para marcar empréstimo como pago - VERSÃO CORRIGIDA
+    function marcarComoPago(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            // CORREÇÃO: Registrar o valor ATUAL (não apenas os juros)
+            const valorTotalRecebido = emprestimo.valorAtual;
+            const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
+            
+            const pagamentoTotal = {
+                data: new Date().toISOString(),
+                valorPago: valorTotalRecebido, // CORREÇÃO: Registrar o valor total recebido
+                tipo: 'pagamento_total',
+                valorOriginal: emprestimo.valorOriginal,
+                valorAtual: emprestimo.valorAtual,
+                porcentagem: emprestimo.porcentagem,
+                jurosRecebidos: jurosTotais
+            };
+            
+            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+            
+            // Verificar se já existe um pagamento total para evitar duplicação
+            const pagamentoExistente = emprestimo.historicoJuros.find(
+                item => item.tipo === 'pagamento_total'
+            );
+            
+            if (!pagamentoExistente) {
+                emprestimo.historicoJuros.push(pagamentoTotal);
+            }
+            
+            emprestimo.status = 'pago';
+            emprestimo.dataPagamento = new Date().toISOString();
+            
+            atualizarNoFirebase(emprestimo);
+            mostrarNotificacao(`Empréstimo marcado como PAGO. Valor total de ${formatarMoeda(valorTotalRecebido)} recebido (${formatarMoeda(jurosTotais)} em juros).`);
+        }
+    }
+    
+    // Função para pagar apenas os juros - VERSÃO CORRIGIDA CONFORME SOLICITADO
+    function pagarJuros(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            // CORREÇÃO: Calcular juros sobre o valor ORIGINAL (não sobre o atual)
+            const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
+            
+            const jurosPagamento = {
+                data: new Date().toISOString(),
+                valorPago: valorJuros,
+                tipo: 'juros',
+                valorOriginal: emprestimo.valorOriginal,
+                valorAtual: emprestimo.valorAtual,
+                porcentagem: emprestimo.porcentagem
+            };
+            
+            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+            emprestimo.historicoJuros.push(jurosPagamento);
+            
+            // Apenas adiciona um mês ao vencimento, mantém o valor atual
+            const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+            dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+            emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+            
+            // NÃO altera o valor atual - mantém o empréstimo original + juros
+            // O cliente pagou apenas os juros, o valor emprestado continua o mesmo
+            
+            atualizarNoFirebase(emprestimo);
+            mostrarNotificacao(`Juros de ${formatarMoeda(valorJuros)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
+        }
+    }
+    
+    // Função para marcar como não pago (aplica juros)
+    function naoPago(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+            dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+            emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+            
+            // CORREÇÃO: Aplicar juros sobre o valor ATUAL (não sobre o original)
+            const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+            emprestimo.valorAtual += juros;
+            
+            const naoPagamento = {
+                data: new Date().toISOString(),
+                motivo: 'Não pagamento',
+                jurosAplicados: juros,
+                tipo: 'multa',
+                valorAtual: emprestimo.valorAtual,
+                porcentagem: emprestimo.porcentagem
+            };
+            
+            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+            emprestimo.historicoJuros.push(naoPagamento);
+            
+            atualizarNoFirebase(emprestimo);
+            mostrarNotificacao('Juros aplicados sobre o valor atual. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
+        }
+    }
+    
+    // Função para reabrir empréstimo
+    function reabrirEmprestimo(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            emprestimo.status = 'pendente';
+            delete emprestimo.dataPagamento;
+            
+            // Remover o histórico de pagamento total ao reabrir
+            if (emprestimo.historicoJuros) {
+                emprestimo.historicoJuros = emprestimo.historicoJuros.filter(
+                    item => item.tipo !== 'pagamento_total'
+                );
+            }
+            
+            atualizarNoFirebase(emprestimo);
+            mostrarNotificacao('Empréstimo reaberto');
+        }
+    }
+    
+    // ========== FUNÇÃO DE EDIÇÃO ==========
+    
+    // Função para editar empréstimo
+    function editarEmprestimo(id) {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            document.getElementById('editId').value = emprestimo.id;
+            document.getElementById('editNome').value = emprestimo.nome;
+            document.getElementById('editDataEmprestimo').value = emprestimo.dataEmprestimo;
+            document.getElementById('editValorEmprestimo').value = emprestimo.valorOriginal;
+            document.getElementById('editDataVencimento').value = emprestimo.dataVencimento;
+            document.getElementById('editPorcentagem').value = emprestimo.porcentagem;
+            
+            editModal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+    }
+    
+    // Função para salvar edição
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Event listener para o formulário
-        loanForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const nome = document.getElementById('nome').value;
-            const dataEmprestimo = document.getElementById('dataEmprestimo').value;
-            const valorEmprestimo = parseFloat(document.getElementById('valorEmprestimo').value);
-            const dataVencimento = document.getElementById('dataVencimento').value;
-            const porcentagem = parseFloat(document.getElementById('porcentagem').value);
-            
-            const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
-            
-            valorTotalDiv.textContent = `Valor Total com ${porcentagem}%: ${formatarMoeda(valorTotal)}`;
-            valorTotalDiv.classList.remove('hidden');
-            
-            adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem);
-        });
+        const id = parseInt(document.getElementById('editId').value);
+        const nome = document.getElementById('editNome').value;
+        const dataEmprestimo = document.getElementById('editDataEmprestimo').value;
+        const valorEmprestimo = parseFloat(document.getElementById('editValorEmprestimo').value);
+        const dataVencimento = document.getElementById('editDataVencimento').value;
+        const porcentagem = parseFloat(document.getElementById('editPorcentagem').value);
         
-        // Fechar modais
-        closeModal.addEventListener('click', function() {
-            comprovanteModal.style.display = 'none';
-            document.body.classList.remove('modal-open');
-        });
-        
-        closeEditModal.addEventListener('click', function() {
+        const emprestimo = emprestimos.find(emp => emp.id === id);
+        if (emprestimo) {
+            emprestimo.nome = nome;
+            emprestimo.dataEmprestimo = dataEmprestimo;
+            emprestimo.valorOriginal = valorEmprestimo;
+            emprestimo.dataVencimento = dataVencimento;
+            emprestimo.porcentagem = porcentagem;
+            
+            // Recalcular valor atual
+            emprestimo.valorAtual = calcularValorTotal(valorEmprestimo, porcentagem);
+            
+            atualizarNoFirebase(emprestimo);
+            mostrarNotificacao('Empréstimo atualizado com sucesso!');
+            
             editModal.style.display = 'none';
             document.body.classList.remove('modal-open');
-        });
-        
-        // Fechar modal clicando fora
-        window.addEventListener('click', function(e) {
-            if (e.target === comprovanteModal) {
-                comprovanteModal.style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }
-            if (e.target === editModal) {
-                editModal.style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }
-        });
-        
-        // Inicializar a aplicação
-        function inicializar() {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('dataEmprestimo').value = hoje;
-            
-            const vencimento = new Date();
-            vencimento.setDate(vencimento.getDate() + 30);
-            document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
-            
-            setInterval(verificarVencimentosProximos, 60 * 60 * 1000);
         }
+    });
+    
+    // Função para excluir empréstimo
+    function excluirEmprestimo(id) {
+        if (confirm('Tem certeza que deseja excluir este empréstimo? Esta ação não pode ser desfeita.')) {
+            const index = emprestimos.findIndex(emp => emp.id === id);
+            if (index !== -1) {
+                const nome = emprestimos[index].nome;
+                excluirDoFirebase(id);
+                mostrarNotificacao(`Empréstimo de ${nome} excluído com sucesso`);
+            }
+        }
+    }
+    
+    // Função para verificar vencimentos próximos
+    function verificarVencimentosProximos() {
+        emprestimos.forEach(emprestimo => {
+            if (emprestimo.status === 'pendente' && dataProxima(emprestimo.dataVencimento)) {
+                mostrarNotificacao(
+                    `Atenção: Empréstimo de ${emprestimo.nome} vence em ${formatarData(emprestimo.dataVencimento)}!`, 
+                    'warning'
+                );
+            }
+        });
+    }
+    
+    // Event listener para o formulário
+    loanForm.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Chamar função de inicialização quando a página carregar
-        document.addEventListener('DOMContentLoaded', inicializar);
+        const nome = document.getElementById('nome').value;
+        const dataEmprestimo = document.getElementById('dataEmprestimo').value;
+        const valorEmprestimo = parseFloat(document.getElementById('valorEmprestimo').value);
+        const dataVencimento = document.getElementById('dataVencimento').value;
+        const porcentagem = parseFloat(document.getElementById('porcentagem').value);
         
-        // Tornar funções disponíveis globalmente
-        window.marcarComoPago = marcarComoPago;
-        window.pagarJuros = pagarJuros;
-        window.naoPago = naoPago;
-        window.reabrirEmprestimo = reabrirEmprestimo;
-        window.excluirEmprestimo = excluirEmprestimo;
-        window.verDetalhes = verDetalhes;
-        window.imprimirComprovante = imprimirComprovante;
-        window.editarEmprestimo = editarEmprestimo;
-        window.logout = logout;
-        window.esqueciSenha = esqueciSenha;
-        window.installApp = installApp;
+        const valorTotal = calcularValorTotal(valorEmprestimo, porcentagem);
+        
+        valorTotalDiv.textContent = `Valor Total com ${porcentagem}%: ${formatarMoeda(valorTotal)}`;
+        valorTotalDiv.classList.remove('hidden');
+        
+        adicionarEmprestimo(nome, dataEmprestimo, valorEmprestimo, dataVencimento, porcentagem);
+    });
+    
+    // Fechar modais
+    closeModal.addEventListener('click', function() {
+        comprovanteModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    });
+    
+    closeEditModal.addEventListener('click', function() {
+        editModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    });
+    
+    // Fechar modal clicando fora
+    window.addEventListener('click', function(e) {
+        if (e.target === comprovanteModal) {
+            comprovanteModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+        if (e.target === editModal) {
+            editModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+    });
+    
+    // Inicializar a aplicação
+    function inicializar() {
+        const hoje = new Date().toISOString().split('T')[0];
+        document.getElementById('dataEmprestimo').value = hoje;
+        
+        const vencimento = new Date();
+        vencimento.setDate(vencimento.getDate() + 30);
+        document.getElementById('dataVencimento').value = vencimento.toISOString().split('T')[0];
+        
+        setInterval(verificarVencimentosProximos, 60 * 60 * 1000);
+    }
+    
+    // Chamar função de inicialização quando a página carregar
+    document.addEventListener('DOMContentLoaded', inicializar);
+    
+    // Tornar funções disponíveis globalmente
+    window.marcarComoPago = marcarComoPago;
+    window.pagarJuros = pagarJuros;
+    window.naoPago = naoPago;
+    window.reabrirEmprestimo = reabrirEmprestimo;
+    window.excluirEmprestimo = excluirEmprestimo;
+    window.verDetalhes = verDetalhes;
+    window.imprimirComprovante = imprimirComprovante;
+    window.editarEmprestimo = editarEmprestimo;
+    window.logout = logout;
+    window.esqueciSenha = esqueciSenha;
+    window.installApp = installApp;
     </script>
 </body>
 </html>
