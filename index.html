@@ -171,7 +171,7 @@
         }
         
         .logo-icon::before {
-            content: '💰';
+            content: '';
             font-size: 30px;
             filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
             color: var(--light-gray);
@@ -195,6 +195,15 @@
             border-radius: 50%;
             z-index: -1;
             animation: rotate 3s linear infinite;
+        }
+        
+        .logo-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border: 2px solid var(--medium-gray);
         }
         
         .logo-text {
@@ -1005,7 +1014,9 @@
     <!-- Splash Screen para PWA -->
     <div id="splashScreen" class="splash-screen">
         <div class="splash-logo">
-            <div class="logo-icon"></div>
+            <div class="logo-image-container">
+                <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+            </div>
             <div class="logo-text">
                 <div class="logo-primary">FinControl</div>
                 <div class="logo-secondary">GESTÃO FINANCEIRA</div>
@@ -1019,7 +1030,9 @@
         <div class="login-card">
             <div class="login-logo">
                 <div class="logo">
-                    <div class="logo-icon"></div>
+                    <div class="logo-image-container">
+                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+                    </div>
                     <div class="logo-text">
                         <div class="logo-primary">FinControl</div>
                         <div class="logo-secondary">GESTÃO FINANCEIRA</div>
@@ -1048,7 +1061,9 @@
         <!-- Logo -->
         <div class="logo-container">
             <div class="logo">
-                <div class="logo-icon"></div>
+                <div class="logo-image-container">
+                    <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+                </div>
                 <div class="logo-text">
                     <div class="logo-primary">FinControl</div>
                     <div class="logo-secondary">GESTÃO FINANCEIRA</div>
@@ -1561,7 +1576,7 @@
             .catch((error) => {
                 mostrarNotificacao('Erro no login: ' + error.message, 'error');
             });
-    });
+    }
     
     // Logout
     function logout() {
@@ -1736,7 +1751,9 @@
         comprovanteContent.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="display: inline-flex; align-items: center; gap: 10px;">
-                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">💰</div>
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
+                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" style="width: 30px; height: 30px; border-radius: 50%;">
+                    </div>
                     <div style="text-align: left;">
                         <div style="font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--black) 0%, var(--medium-gray) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">FinControl</div>
                         <div style="font-size: 0.7rem; color: var(--medium-gray); font-weight: 600;">COMPROVANTE OFICIAL</div>
@@ -1982,103 +1999,103 @@
     
     // ========== CORREÇÕES DOS JUROS ==========
     
-    // Função para marcar empréstimo como pago - VERSÃO CORRIGIDA
-    function marcarComoPago(id) {
-        const emprestimo = emprestimos.find(emp => emp.id === id);
-        if (emprestimo) {
-            // CORREÇÃO: Registrar o valor ATUAL (não apenas os juros)
-            const valorTotalRecebido = emprestimo.valorAtual;
-            const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
-            
-            const pagamentoTotal = {
-                data: new Date().toISOString(),
-                valorPago: valorTotalRecebido, // CORREÇÃO: Registrar o valor total recebido
-                tipo: 'pagamento_total',
-                valorOriginal: emprestimo.valorOriginal,
-                valorAtual: emprestimo.valorAtual,
-                porcentagem: emprestimo.porcentagem,
-                jurosRecebidos: jurosTotais
-            };
-            
-            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-            
-            // Verificar se já existe um pagamento total para evitar duplicação
-            const pagamentoExistente = emprestimo.historicoJuros.find(
-                item => item.tipo === 'pagamento_total'
-            );
-            
-            if (!pagamentoExistente) {
-                emprestimo.historicoJuros.push(pagamentoTotal);
-            }
-            
-            emprestimo.status = 'pago';
-            emprestimo.dataPagamento = new Date().toISOString();
-            
-            atualizarNoFirebase(emprestimo);
-            mostrarNotificacao(`Empréstimo marcado como PAGO. Valor total de ${formatarMoeda(valorTotalRecebido)} recebido (${formatarMoeda(jurosTotais)} em juros).`);
+// Função para marcar empréstimo como pago - VERSÃO CORRIGIDA
+function marcarComoPago(id) {
+    const emprestimo = emprestimos.find(emp => emp.id === id);
+    if (emprestimo) {
+        // Registrar APENAS os juros totais acumulados
+        const jurosTotais = emprestimo.valorAtual - emprestimo.valorOriginal;
+        
+        const pagamentoTotal = {
+            data: new Date().toISOString(),
+            valorPago: jurosTotais, // Registrar apenas os juros
+            tipo: 'pagamento_total',
+            valorOriginal: emprestimo.valorOriginal,
+            valorAtual: emprestimo.valorAtual,
+            porcentagem: emprestimo.porcentagem,
+            jurosRecebidos: jurosTotais
+        };
+        
+        if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+        
+        // Verificar se já existe um pagamento total para evitar duplicação
+        const pagamentoExistente = emprestimo.historicoJuros.find(
+            item => item.tipo === 'pagamento_total'
+        );
+        
+        if (!pagamentoExistente) {
+            emprestimo.historicoJuros.push(pagamentoTotal);
         }
+        
+        emprestimo.status = 'pago';
+        emprestimo.dataPagamento = new Date().toISOString();
+        
+        atualizarNoFirebase(emprestimo);
+        mostrarNotificacao(`Empréstimo marcado como PAGO. Juros de ${formatarMoeda(jurosTotais)} recebidos.`);
     }
-    
-    // Função para pagar apenas os juros - VERSÃO CORRIGIDA CONFORME SOLICITADO
-    function pagarJuros(id) {
-        const emprestimo = emprestimos.find(emp => emp.id === id);
-        if (emprestimo) {
-            // CORREÇÃO: Calcular juros sobre o valor ORIGINAL (não sobre o atual)
-            const valorJuros = emprestimo.valorOriginal * (emprestimo.porcentagem / 100);
-            
-            const jurosPagamento = {
-                data: new Date().toISOString(),
-                valorPago: valorJuros,
-                tipo: 'juros',
-                valorOriginal: emprestimo.valorOriginal,
-                valorAtual: emprestimo.valorAtual,
-                porcentagem: emprestimo.porcentagem
-            };
-            
-            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-            emprestimo.historicoJuros.push(jurosPagamento);
-            
-            // Apenas adiciona um mês ao vencimento, mantém o valor atual
-            const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-            dataVencimento.setMonth(dataVencimento.getMonth() + 1);
-            emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
-            
-            // NÃO altera o valor atual - mantém o empréstimo original + juros
-            // O cliente pagou apenas os juros, o valor emprestado continua o mesmo
-            
-            atualizarNoFirebase(emprestimo);
-            mostrarNotificacao(`Juros de ${formatarMoeda(valorJuros)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
-        }
+}
+
+// Função para pagar apenas os juros - VERSÃO CORRIGIDA
+function pagarJuros(id) {
+    const emprestimo = emprestimos.find(emp => emp.id === id);
+    if (emprestimo) {
+        // CORREÇÃO: Calcular APENAS os juros acumulados (valor atual - valor original)
+        const jurosAcumulados = emprestimo.valorAtual - emprestimo.valorOriginal;
+        
+        const jurosPagamento = {
+            data: new Date().toISOString(),
+            valorPago: jurosAcumulados, // CORREÇÃO: Registrar apenas os juros acumulados
+            tipo: 'juros',
+            valorOriginal: emprestimo.valorOriginal,
+            valorAtual: emprestimo.valorAtual,
+            porcentagem: emprestimo.porcentagem,
+            jurosRecebidos: jurosAcumulados
+        };
+        
+        if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+        emprestimo.historicoJuros.push(jurosPagamento);
+        
+        // Apenas adiciona um mês ao vencimento, mantém o valor atual
+        const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+        dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+        emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+        
+        // NÃO altera o valor atual - o cliente pagou apenas os juros acumulados
+        // O valor do empréstimo continua o mesmo
+        
+        atualizarNoFirebase(emprestimo);
+        mostrarNotificacao(`Juros de ${formatarMoeda(jurosAcumulados)} pagos. Novo vencimento: ${formatarData(emprestimo.dataVencimento)}`);
     }
-    
-    // Função para marcar como não pago (aplica juros)
-    function naoPago(id) {
-        const emprestimo = emprestimos.find(emp => emp.id === id);
-        if (emprestimo) {
-            const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-            dataVencimento.setMonth(dataVencimento.getMonth() + 1);
-            emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
-            
-            // CORREÇÃO: Aplicar juros sobre o valor ATUAL (não sobre o original)
-            const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
-            emprestimo.valorAtual += juros;
-            
-            const naoPagamento = {
-                data: new Date().toISOString(),
-                motivo: 'Não pagamento',
-                jurosAplicados: juros,
-                tipo: 'multa',
-                valorAtual: emprestimo.valorAtual,
-                porcentagem: emprestimo.porcentagem
-            };
-            
-            if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
-            emprestimo.historicoJuros.push(naoPagamento);
-            
-            atualizarNoFirebase(emprestimo);
-            mostrarNotificacao('Juros aplicados sobre o valor atual. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
-        }
+}
+
+// Função para marcar como não pago (aplica juros)
+function naoPago(id) {
+    const emprestimo = emprestimos.find(emp => emp.id === id);
+    if (emprestimo) {
+        const dataVencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
+        dataVencimento.setMonth(dataVencimento.getMonth() + 1);
+        emprestimo.dataVencimento = dataVencimento.toISOString().split('T')[0];
+        
+        // Aplicar juros sobre o valor ATUAL
+        const juros = emprestimo.valorAtual * (emprestimo.porcentagem / 100);
+        emprestimo.valorAtual += juros;
+        
+        const naoPagamento = {
+            data: new Date().toISOString(),
+            motivo: 'Não pagamento',
+            jurosAplicados: juros,
+            tipo: 'multa',
+            valorAtual: emprestimo.valorAtual,
+            porcentagem: emprestimo.porcentagem
+        };
+        
+        if (!emprestimo.historicoJuros) emprestimo.historicoJuros = [];
+        emprestimo.historicoJuros.push(naoPagamento);
+        
+        atualizarNoFirebase(emprestimo);
+        mostrarNotificacao('Juros aplicados sobre o valor atual. Novo valor: ' + formatarMoeda(emprestimo.valorAtual));
     }
+}
     
     // Função para reabrir empréstimo
     function reabrirEmprestimo(id) {
