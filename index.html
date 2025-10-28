@@ -158,52 +158,35 @@
             border: 3px solid var(--medium-gray);
         }
         
-        .logo-icon {
+        .logo-image-container {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--black) 100%);
             border-radius: 50%;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .logo-icon::before {
-            content: '';
-            font-size: 30px;
-            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
-            color: var(--light-gray);
-        }
-        
-        .logo-icon::after {
-            content: '';
-            position: absolute;
-            top: -5px;
-            left: -5px;
-            right: -5px;
-            bottom: -5px;
-            background: conic-gradient(
-                var(--dark-gray),
-                var(--medium-gray),
-                var(--silver),
-                var(--light-gray),
-                var(--black),
-                var(--dark-gray)
-            );
-            border-radius: 50%;
-            z-index: -1;
-            animation: rotate 3s linear infinite;
+            background: linear-gradient(135deg, var(--dark-gray) 0%, var(--black) 100%);
+            border: 2px solid var(--medium-gray);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         
         .logo-image {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            border: 2px solid var(--medium-gray);
+        }
+        
+        .logo-image-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
         }
         
         .logo-text {
@@ -912,7 +895,7 @@
                 font-size: 1.5rem;
             }
             
-            .logo-icon {
+            .logo-image-container {
                 width: 50px;
                 height: 50px;
             }
@@ -1015,7 +998,8 @@
     <div id="splashScreen" class="splash-screen">
         <div class="splash-logo">
             <div class="logo-image-container">
-                <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+                <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="logo-image-fallback" style="display: none;">FC</div>
             </div>
             <div class="logo-text">
                 <div class="logo-primary">FinControl</div>
@@ -1031,7 +1015,8 @@
             <div class="login-logo">
                 <div class="logo">
                     <div class="logo-image-container">
-                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="logo-image-fallback" style="display: none;">FC</div>
                     </div>
                     <div class="logo-text">
                         <div class="logo-primary">FinControl</div>
@@ -1062,7 +1047,8 @@
         <div class="logo-container">
             <div class="logo">
                 <div class="logo-image-container">
-                    <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image">
+                    <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="logo-image-fallback" style="display: none;">FC</div>
                 </div>
                 <div class="logo-text">
                     <div class="logo-primary">FinControl</div>
@@ -1211,6 +1197,7 @@
 <script>
     // ========== PWA SPLASH SCREEN ==========
     window.addEventListener('load', function() {
+        // Garantir que a splash screen feche mesmo se a imagem não carregar
         setTimeout(function() {
             document.getElementById('splashScreen').style.display = 'none';
         }, 2000);
@@ -1271,12 +1258,6 @@
             navigator.serviceWorker.register('/sw.js')
                 .then((registration) => {
                     console.log('Service Worker registrado com sucesso:', registration);
-                    // Registrar também o service worker de notificações
-                    navigator.serviceWorker.register('/sw-notificacoes.js')
-                        .then(notifRegistration => {
-                            console.log('Service Worker de notificações registrado');
-                            inicializarSistemaNotificacoes();
-                        });
                 })
                 .catch((error) => {
                     console.log('Falha ao registrar Service Worker:', error);
@@ -1329,214 +1310,6 @@
         }
     }
     
-    // ========== SISTEMA DE NOTIFICAÇÕES PUSH ==========
-    
-    let notificacaoPermission = false;
-    let notificacaoInterval;
-
-    function inicializarSistemaNotificacoes() {
-        // Verificar se notificações são suportadas
-        if (!('Notification' in window)) {
-            console.log('Este navegador não suporta notificações desktop');
-            return;
-        }
-
-        // Verificar permissão atual
-        if (Notification.permission === 'granted') {
-            notificacaoPermission = true;
-            iniciarVerificacaoPeriodica();
-            console.log('🔔 Notificações já autorizadas');
-        } else if (Notification.permission === 'default') {
-            // Mostrar botão para ativar notificações
-            criarBotaoAtivarNotificacoes();
-        }
-    }
-
-    function criarBotaoAtivarNotificacoes() {
-        const notifButton = document.createElement('button');
-        notifButton.innerHTML = '🔔 Ativar Notificações';
-        notifButton.className = 'btn-success';
-        notifButton.style.margin = '10px 0';
-        notifButton.style.width = 'auto';
-        notifButton.style.display = 'inline-block';
-        notifButton.onclick = solicitarPermissaoNotificacoes;
-
-        const header = document.querySelector('header');
-        if (header) {
-            const existingButton = header.querySelector('#notifButton');
-            if (!existingButton) {
-                notifButton.id = 'notifButton';
-                header.appendChild(notifButton);
-            }
-        }
-    }
-
-    async function solicitarPermissaoNotificacoes() {
-        try {
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                notificacaoPermission = true;
-                mostrarNotificacao('🔔 Notificações ativadas! Você receberá alertas de vencimentos.', 'success');
-                iniciarVerificacaoPeriodica();
-                
-                // Remover botão
-                const notifButton = document.getElementById('notifButton');
-                if (notifButton) {
-                    notifButton.remove();
-                }
-            } else {
-                mostrarNotificacao('Notificações não ativadas. Você pode ativar depois nas configurações.', 'warning');
-            }
-        } catch (error) {
-            console.error('Erro ao solicitar permissão:', error);
-        }
-    }
-
-    function iniciarVerificacaoPeriodica() {
-        // Verificar imediatamente
-        verificarVencimentosENotificar();
-        
-        // Verificar a cada 30 minutos
-        notificacaoInterval = setInterval(verificarVencimentosENotificar, 30 * 60 * 1000);
-        
-        // Verificar também a cada vez que a página ganha foco
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                verificarVencimentosENotificar();
-            }
-        });
-    }
-
-    async function verificarVencimentosENotificar() {
-        if (!currentUser || !notificacaoPermission) return;
-
-        try {
-            const hoje = new Date();
-            let notificacoesParaEnviar = [];
-
-            // Verificar cada empréstimo
-            emprestimos.forEach(emprestimo => {
-                if (emprestimo.status === 'pendente') {
-                    const vencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-                    const diferenca = vencimento - hoje;
-                    const dias = Math.ceil(diferenca / (1000 * 60 * 60 * 24));
-                    
-                    if (dias === 0) {
-                        // VENCE HOJE - Notificação URGENTE
-                        notificacoesParaEnviar.push({
-                            titulo: '🚨 VENCIMENTO HOJE!',
-                            corpo: `${emprestimo.nome} - ${formatarMoeda(emprestimo.valorAtual)}`,
-                            urgente: true,
-                            tag: `hoje-${emprestimo.id}`,
-                            vibrate: [300, 100, 300]
-                        });
-                    } else if (dias === 1) {
-                        // Vence amanhã
-                        notificacoesParaEnviar.push({
-                            titulo: '⚠️ Vence amanhã!',
-                            corpo: `${emprestimo.nome} - ${formatarMoeda(emprestimo.valorAtual)}`,
-                            urgente: true,
-                            tag: `amanha-${emprestimo.id}`,
-                            vibrate: [200, 100, 200]
-                        });
-                    } else if (dias <= 3) {
-                        // Vence em 2-3 dias
-                        notificacoesParaEnviar.push({
-                            titulo: '📅 Vencimento próximo',
-                            corpo: `${emprestimo.nome} - ${dias} dias - ${formatarMoeda(emprestimo.valorAtual)}`,
-                            urgente: false,
-                            tag: `proximo-${emprestimo.id}`,
-                            vibrate: [100, 50, 100]
-                        });
-                    }
-                }
-            });
-
-            // Enviar notificações
-            notificacoesParaEnviar.forEach(notif => {
-                enviarNotificacaoPush(notif.titulo, notif.corpo, notif.urgente, notif.tag, notif.vibrate);
-            });
-
-            // Mostrar resumo na interface
-            if (notificacoesParaEnviar.length > 0 && document.hidden) {
-                const urgentes = notificacoesParaEnviar.filter(n => n.urgente).length;
-                const normais = notificacoesParaEnviar.length - urgentes;
-                
-                if (urgentes > 0) {
-                    console.log(`🔔 ${urgentes} vencimento(s) urgente(s) notificado(s)`);
-                }
-            }
-
-        } catch (error) {
-            console.error('Erro ao verificar vencimentos:', error);
-        }
-    }
-
-    function enviarNotificacaoPush(titulo, corpo, urgente = false, tag = '', vibrate = [100, 50, 100]) {
-        if (!notificacaoPermission) return;
-
-        const options = {
-            body: corpo,
-            icon: '/icon-192.png',
-            badge: '/icon-192.png',
-            tag: tag,
-            requireInteraction: urgente,
-            vibrate: vibrate,
-            silent: !urgente,
-            data: {
-                url: window.location.href,
-                timestamp: new Date().getTime()
-            }
-        };
-
-        // Enviar notificação
-        const notification = new Notification(titulo, options);
-
-        // Quando a notificação é clicada
-        notification.onclick = function(event) {
-            event.preventDefault();
-            window.focus();
-            notification.close();
-            
-            // Rolagem suave para a seção de empréstimos
-            const loansSection = document.querySelector('.loans-grid');
-            if (loansSection) {
-                loansSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        };
-
-        // Fechar automaticamente após tempo (se não for urgente)
-        if (!urgente) {
-            setTimeout(() => {
-                notification.close();
-            }, 10000); // 10 segundos
-        }
-
-        // Log para debug
-        console.log(`📲 Notificação enviada: ${titulo} - ${corpo}`);
-    }
-
-    // Notificação quando um novo empréstimo é adicionado com vencimento próximo
-    function verificarNotificacaoNovoEmprestimo(emprestimo) {
-        if (!notificacaoPermission) return;
-
-        const vencimento = new Date(emprestimo.dataVencimento + 'T00:00:00');
-        const hoje = new Date();
-        const dias = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
-
-        if (dias <= 3) {
-            setTimeout(() => {
-                enviarNotificacaoPush(
-                    '📝 Novo empréstimo adicionado',
-                    `${emprestimo.nome} - Vence em ${dias} dias - ${formatarMoeda(emprestimo.valorAtual)}`,
-                    false,
-                    `novo-${emprestimo.id}`
-                );
-            }, 2000);
-        }
-    }
-    
     // ========== SISTEMA DE AUTENTICAÇÃO ==========
     
     // Verificar estado de autenticação
@@ -1546,20 +1319,10 @@
             loginScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
             carregarDoFirebase();
-            
-            // Inicializar notificações após login
-            setTimeout(() => {
-                inicializarSistemaNotificacoes();
-            }, 1000);
         } else {
             currentUser = null;
             loginScreen.classList.remove('hidden');
             appScreen.classList.add('hidden');
-            
-            // Parar verificações quando deslogar
-            if (notificacaoInterval) {
-                clearInterval(notificacaoInterval);
-            }
         }
     });
     
@@ -1576,7 +1339,7 @@
             .catch((error) => {
                 mostrarNotificacao('Erro no login: ' + error.message, 'error');
             });
-    }
+    });
     
     // Logout
     function logout() {
@@ -1706,9 +1469,6 @@
                 // Mostrar notificação
                 mostrarNotificacao('Empréstimo cadastrado com sucesso!');
                 
-                // Verificar notificação para vencimento próximo
-                verificarNotificacaoNovoEmprestimo(emprestimo);
-                
                 // Limpar formulário
                 limparFormulario();
                 
@@ -1752,7 +1512,8 @@
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="display: inline-flex; align-items: center; gap: 10px;">
                     <div style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--medium-gray) 0%, var(--black) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
-                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" style="width: 30px; height: 30px; border-radius: 50%;">
+                        <img src="https://i.imgur.com/SqRjPfO.png" alt="FinControl Logo" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 30px; height: 30px; border-radius: 50%; background: var(--dark-gray); color: white; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold;">FC</div>
                     </div>
                     <div style="text-align: left;">
                         <div style="font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--black) 0%, var(--medium-gray) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">FinControl</div>
